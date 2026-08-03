@@ -54,8 +54,11 @@ def test_tampered_or_expired_access_token_is_rejected() -> None:
         acl_version=1,
         now=NOW,
     )
+    header, payload, signature = token.split(".")
+    replacement = "A" if signature[0] != "A" else "B"
+    tampered_token = ".".join((header, payload, f"{replacement}{signature[1:]}"))
     with pytest.raises(InvalidTokenError):
-        service.decode_access_token(f"{token[:-1]}x", now=NOW + timedelta(seconds=1))
+        service.decode_access_token(tampered_token, now=NOW + timedelta(seconds=1))
     with pytest.raises(InvalidTokenError):
         service.decode_access_token(token, now=NOW + timedelta(hours=1))
 

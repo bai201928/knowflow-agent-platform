@@ -76,9 +76,7 @@ def _identity(
     return login_session, user
 
 
-def _db_session(
-    identity: tuple[LoginSession, User], roles: list[RoleCode]
-) -> AsyncMock:
+def _db_session(identity: tuple[LoginSession, User], roles: list[RoleCode]) -> AsyncMock:
     identity_row = MagicMock()
     identity_row.tuple.return_value = identity
     identity_result = MagicMock()
