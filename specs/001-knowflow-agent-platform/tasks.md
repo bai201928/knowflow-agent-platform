@@ -46,10 +46,10 @@ acceptance checkpoint; tasks use the exact checklist format and repository-relat
 - [X] T014 [P] Map Ticket, TicketEvent, Approval, and NotificationDelivery state/version fields and constraints in `src/knowflow/infrastructure/db/models/ticketing.py`
 - [X] T015 [P] Map Document, DocumentACLGrant, DocumentVersion, DocumentSegment, RetrievalEvidence, EvaluationRun, and EvaluationResult in `src/knowflow/infrastructure/db/models/knowledge.py`
 - [X] T016 Create the initial MySQL schema, indexes, unique keys, foreign keys, and state checks from the four model groups in `alembic/versions/0001_initial_schema.py`
-- [ ] T017 Implement Argon2id password verification, short-lived JWT issue/validation, session revocation, and trusted claims in `src/knowflow/application/auth/service.py`
-- [ ] T018 Implement immutable `AccessContext`, four-role capability rules, team/owner object checks, and ACL scope-token generation in `src/knowflow/application/auth/policy.py`
-- [ ] T019 Wire authentication, request/trace IDs, deadline creation, access-context loading, and problem responses in `src/knowflow/api/dependencies.py` and `src/knowflow/api/error_handlers.py`
-- [ ] T020 Create the FastAPI lifespan, router registry, dependency health endpoint, and native OpenAPI metadata in `src/knowflow/api/main.py`
+- [X] T017 Implement Argon2id password verification, short-lived JWT issue/validation, session revocation, and trusted claims in `src/knowflow/application/auth/service.py`
+- [X] T018 Implement immutable `AccessContext`, four-role capability rules, team/owner object checks, and ACL scope-token generation in `src/knowflow/application/auth/policy.py`
+- [X] T019 Wire authentication, request/trace IDs, deadline creation, access-context loading, and problem responses in `src/knowflow/api/dependencies.py` and `src/knowflow/api/error_handlers.py`
+- [X] T020 Create the FastAPI lifespan, router registry, dependency health endpoint, and native OpenAPI metadata in `src/knowflow/api/main.py`
 - [ ] T021 Define async chat/embedding ports, the OpenAI-compatible adapter, deterministic structured stub, and provider error normalization in `src/knowflow/infrastructure/models/adapters.py`
 - [ ] T022 Configure async Redis clients, Redis checkpoint index setup, session/cache namespacing, token buckets, and lease helpers in `src/knowflow/infrastructure/redis/client.py`
 - [ ] T023 Define versioned event envelopes, the event catalog, publisher/consumer ports, and payload hash validation matching `contracts/events.md` in `src/knowflow/domain/messaging/events.py`
