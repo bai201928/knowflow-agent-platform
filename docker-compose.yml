@@ -26,10 +26,10 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:${REDIS_IMAGE_TAG:-8.0-alpine}
+    image: redis:${REDIS_IMAGE_TAG:-8.2.7}
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-change-me-local-only}
-    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-change-me-local-only}"]
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
