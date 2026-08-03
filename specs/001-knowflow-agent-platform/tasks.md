@@ -53,7 +53,7 @@ acceptance checkpoint; tasks use the exact checklist format and repository-relat
 - [X] T021 Define async chat/embedding ports, the OpenAI-compatible adapter, deterministic structured stub, and provider error normalization in `src/knowflow/infrastructure/models/adapters.py`
 - [X] T022 Configure async Redis clients, Redis checkpoint index setup, session/cache namespacing, token buckets, and lease helpers in `src/knowflow/infrastructure/redis/client.py`
 - [X] T023 Define versioned event envelopes, the event catalog, publisher/consumer ports, and payload hash validation matching `contracts/events.md` in `src/knowflow/domain/messaging/events.py`
-- [ ] T024 Configure structured redacted logs, OpenTelemetry trace/metric providers, context links, and no-op local exporters in `src/knowflow/infrastructure/observability/bootstrap.py`
+- [X] T024 Configure structured redacted logs, OpenTelemetry trace/metric providers, context links, and no-op local exporters in `src/knowflow/infrastructure/observability/bootstrap.py`
 - [ ] T025 Build pytest configuration, async database cleanup, seeded users, deterministic adapters, clock control, and dependency overrides in `tests/conftest.py`
 - [X] T026 [P] Add schema tests for local `$ref` resolution, operation IDs, event examples, state enums, and problem responses in `tests/contract/test_foundation_contracts.py`
 
