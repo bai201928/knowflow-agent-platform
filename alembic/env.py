@@ -13,6 +13,8 @@ from sqlalchemy import MetaData, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from knowflow.infrastructure.db.session import UTCDateTime
+
 config = context.config
 
 if config.config_file_name is not None:
@@ -62,6 +64,15 @@ def _load_target_metadata() -> MetaData | None:
 target_metadata = _load_target_metadata()
 
 
+def _render_item(item_type: str, item: object, autogen_context: object) -> str | bool:
+    """Keep migrations independent from application-only SQLAlchemy type decorators."""
+
+    del autogen_context
+    if item_type == "type" and isinstance(item, UTCDateTime):
+        return "sa.DateTime()"
+    return False
+
+
 def _database_url() -> str:
     return os.environ.get("KNOWFLOW_DATABASE_URL") or config.get_main_option("sqlalchemy.url")
 
@@ -76,6 +87,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        render_item=_render_item,
     )
 
     with context.begin_transaction():
@@ -88,6 +100,7 @@ def _run_sync_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
+        render_item=_render_item,
     )
 
     with context.begin_transaction():

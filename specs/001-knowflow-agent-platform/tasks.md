@@ -41,11 +41,11 @@ acceptance checkpoint; tasks use the exact checklist format and repository-relat
 - [X] T009 [P] Define domain/application error codes, retryability, concealed-not-found behavior, and RFC 9457 problem mapping in `src/knowflow/domain/common/errors.py`
 - [X] T010 [P] Implement monotonic absolute deadlines, remaining-budget propagation, bounded retry policy, and cancellation classifications in `src/knowflow/domain/common/deadlines.py`
 - [X] T011 Configure async SQLAlchemy engine/session factories, transaction unit-of-work, UTC helpers, naming conventions, and health probes in `src/knowflow/infrastructure/db/session.py`
-- [ ] T012 [P] Map User, Team, Role, UserRole, LoginSession, and immutable audit records with required constraints in `src/knowflow/infrastructure/db/models/identity.py`
-- [ ] T013 [P] Map Workflow, Plan, PlanTask, PlanDependency, WorkflowCommand, OperationRecord, OutboxEvent, and InboxMessage in `src/knowflow/infrastructure/db/models/workflow.py`
-- [ ] T014 [P] Map Ticket, TicketEvent, Approval, and NotificationDelivery state/version fields and constraints in `src/knowflow/infrastructure/db/models/ticketing.py`
-- [ ] T015 [P] Map Document, DocumentACLGrant, DocumentVersion, DocumentSegment, RetrievalEvidence, EvaluationRun, and EvaluationResult in `src/knowflow/infrastructure/db/models/knowledge.py`
-- [ ] T016 Create the initial MySQL schema, indexes, unique keys, foreign keys, and state checks from the four model groups in `alembic/versions/0001_initial_schema.py`
+- [X] T012 [P] Map User, Team, Role, UserRole, LoginSession, and immutable audit records with required constraints in `src/knowflow/infrastructure/db/models/identity.py`
+- [X] T013 [P] Map Workflow, Plan, PlanTask, PlanDependency, WorkflowCommand, OperationRecord, OutboxEvent, and InboxMessage in `src/knowflow/infrastructure/db/models/workflow.py`
+- [X] T014 [P] Map Ticket, TicketEvent, Approval, and NotificationDelivery state/version fields and constraints in `src/knowflow/infrastructure/db/models/ticketing.py`
+- [X] T015 [P] Map Document, DocumentACLGrant, DocumentVersion, DocumentSegment, RetrievalEvidence, EvaluationRun, and EvaluationResult in `src/knowflow/infrastructure/db/models/knowledge.py`
+- [X] T016 Create the initial MySQL schema, indexes, unique keys, foreign keys, and state checks from the four model groups in `alembic/versions/0001_initial_schema.py`
 - [ ] T017 Implement Argon2id password verification, short-lived JWT issue/validation, session revocation, and trusted claims in `src/knowflow/application/auth/service.py`
 - [ ] T018 Implement immutable `AccessContext`, four-role capability rules, team/owner object checks, and ACL scope-token generation in `src/knowflow/application/auth/policy.py`
 - [ ] T019 Wire authentication, request/trace IDs, deadline creation, access-context loading, and problem responses in `src/knowflow/api/dependencies.py` and `src/knowflow/api/error_handlers.py`
