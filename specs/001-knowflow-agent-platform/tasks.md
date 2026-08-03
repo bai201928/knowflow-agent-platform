@@ -86,7 +86,7 @@ and auditable terminal workflow even after repeated submits/resumes.
 - [X] T034 [US1] Implement deterministic slot resolution, resource authorization, DAG cycle/type validation, operation-ID allocation, and plan compilation in `src/knowflow/application/workflows/compiler.py`
 - [X] T035 [P] [US1] Define compact LangGraph State, schema/plan versions, owned single-value fields, ID-deduping reducers, and persisted evidence references in `src/knowflow/workflows/state.py`
 - [X] T036 [US1] Implement operation-ledger claim/replay/conflict/success behavior and atomic ticket-create result reuse in `src/knowflow/application/workflows/operations.py`
-- [ ] T037 [US1] Implement idempotent P1 ticket creation with TicketEvent, AuditEvent, Workflow projection, and Outbox in one unit of work in `src/knowflow/application/tickets/create.py`
+- [X] T037 [US1] Implement idempotent P1 ticket creation with TicketEvent, AuditEvent, Workflow projection, and Outbox in one unit of work in `src/knowflow/application/tickets/create.py`
 - [ ] T038 [US1] Implement the minimal real hybrid retrieval port with server-built ACL filters, RRF evidence selection, and evidence-insufficient disposition in `src/knowflow/application/knowledge/retrieval.py`
 - [ ] T039 [US1] Implement Milvus collection bootstrap, dense/BM25 hybrid query, stable segment IDs, and ACL scope-token filters in `src/knowflow/infrastructure/retrieval/milvus.py`
 - [ ] T040 [US1] Implement approval creation, exact plan/payload/resource binding, one-time decision, expiry/invalidation, and resume-command transaction in `src/knowflow/application/approvals/service.py`
