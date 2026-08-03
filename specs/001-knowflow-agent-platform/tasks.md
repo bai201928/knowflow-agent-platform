@@ -82,8 +82,8 @@ and auditable terminal workflow even after repeated submits/resumes.
 
 - [X] T031 [P] [US1] Define six intent schemas, slot provenance/trust levels, task/dependency/risk models, and clarification outcomes in `src/knowflow/domain/workflows/schemas.py`
 - [X] T032 [P] [US1] Define the versioned intent catalog, capability registry, required slots, permissions, side-effect flags, deadlines, and approval policies in `src/knowflow/domain/workflows/catalog.py`
-- [ ] T033 [US1] Implement candidate intent recall, structured model planning, prompt/version recording, and stub plan fixtures in `src/knowflow/application/workflows/planner.py`
-- [ ] T034 [US1] Implement deterministic slot resolution, resource authorization, DAG cycle/type validation, operation-ID allocation, and plan compilation in `src/knowflow/application/workflows/compiler.py`
+- [X] T033 [US1] Implement candidate intent recall, structured model planning, prompt/version recording, and stub plan fixtures in `src/knowflow/application/workflows/planner.py`
+- [X] T034 [US1] Implement deterministic slot resolution, resource authorization, DAG cycle/type validation, operation-ID allocation, and plan compilation in `src/knowflow/application/workflows/compiler.py`
 - [X] T035 [P] [US1] Define compact LangGraph State, schema/plan versions, owned single-value fields, ID-deduping reducers, and persisted evidence references in `src/knowflow/workflows/state.py`
 - [ ] T036 [US1] Implement operation-ledger claim/replay/conflict/success behavior and atomic ticket-create result reuse in `src/knowflow/application/workflows/operations.py`
 - [ ] T037 [US1] Implement idempotent P1 ticket creation with TicketEvent, AuditEvent, Workflow projection, and Outbox in one unit of work in `src/knowflow/application/tickets/create.py`
