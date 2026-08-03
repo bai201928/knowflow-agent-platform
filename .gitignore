@@ -11,15 +11,20 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.hypothesis/
 .mypy_cache/
 .ruff_cache/
 .coverage
+.coverage.*
+coverage.xml
+junit.xml
 htmlcov/
 .venv/
 venv/
 dist/
 build/
 *.egg-info/
+.uv-cache/
 
 # IDE and OS
 .idea/
@@ -35,12 +40,19 @@ logs/
 *.log
 data/runtime/
 data/uploads/
+data/mysql/
+data/redis/
+data/milvus/
+traces/
 
 # Generated reports may contain prompts or environment metadata.
 # Curated evidence reports can be force-added after redaction.
 reports/evaluation/raw/
 reports/load/raw/
 reports/fault/raw/
+reports/usability/raw/
+reports/**/tmp/
+*.tmp
 
 # Codex local state; project-managed .agents/ skills remain tracked.
 .codex/

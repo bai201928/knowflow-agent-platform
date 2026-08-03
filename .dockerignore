@@ -1,0 +1,51 @@
+# Version-control and agent planning metadata
+.git
+.github
+.agents
+.specify
+.codex
+specs
+KnowFlow_41道核心面试题_5分钟回答.md
+
+# Local secrets (retain the documented template)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python caches and build output
+__pycache__
+**/__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.hypothesis
+.coverage*
+htmlcov
+.venv
+venv
+dist
+build
+*.egg-info
+
+# Runtime state and generated raw evidence
+.cache
+.tmp
+tmp
+logs
+*.log
+data/runtime
+data/uploads
+reports/**/raw
+reports/**/tmp
+traces
+
+# Editor and operating-system noise
+.idea
+.vscode
+.DS_Store
+Thumbs.db

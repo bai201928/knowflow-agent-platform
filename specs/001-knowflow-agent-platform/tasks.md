@@ -19,12 +19,12 @@ acceptance checkpoint; tasks use the exact checklist format and repository-relat
 
 **Purpose**: Establish the installable Python project, local dependencies, and safe configuration.
 
-- [ ] T001 Create the Python 3.12 project metadata, runtime/dev dependency groups, CLI entry point, Ruff, mypy, and pytest configuration in `pyproject.toml`
-- [ ] T002 [P] Create the modular package/test/data/report directory skeleton and package markers under `src/knowflow/`, `tests/`, `data/`, and `reports/`
-- [ ] T003 [P] Define healthy local MySQL 8.4, Redis 8, Milvus/etcd/MinIO, RocketMQ 5.5 proxy, and Mailpit services in `docker-compose.yml`
-- [ ] T004 [P] Document non-secret settings, stub/real model modes, dependency URLs, limits, and sandbox defaults in `.env.example`
-- [ ] T005 [P] Configure Alembic metadata loading and async migration connectivity in `alembic.ini` and `alembic/env.py`
-- [ ] T006 [P] Exclude secrets, local state, caches, generated traces, and transient evaluation outputs while retaining evidence reports in `.gitignore`
+- [X] T001 Create the Python 3.12 project metadata, runtime/dev dependency groups, CLI entry point, Ruff, mypy, and pytest configuration in `pyproject.toml`
+- [X] T002 [P] Create the modular package/test/data/report directory skeleton and package markers under `src/knowflow/`, `tests/`, `data/`, and `reports/`
+- [X] T003 [P] Define healthy local MySQL 8.4, Redis 8, Milvus/etcd/MinIO, RocketMQ 5.5 proxy, and Mailpit services in `docker-compose.yml`
+- [X] T004 [P] Document non-secret settings, stub/real model modes, dependency URLs, limits, and sandbox defaults in `.env.example`
+- [X] T005 [P] Configure Alembic metadata loading and async migration connectivity in `alembic.ini` and `alembic/env.py`
+- [X] T006 [P] Exclude secrets, local state, caches, generated traces, and transient evaluation outputs while retaining evidence reports in `.gitignore`
 
 **Checkpoint**: `uv sync --all-groups` resolves, Compose validates, and imports find `knowflow`.
 
@@ -36,11 +36,11 @@ acceptance checkpoint; tasks use the exact checklist format and repository-relat
 
 **⚠️ CRITICAL**: No user-story implementation starts until this phase passes its checkpoint.
 
-- [ ] T007 [P] Implement typed environment loading, secret validation, per-runtime settings, and safe defaults in `src/knowflow/config.py`
-- [ ] T008 [P] Implement request/workflow/plan/task/operation/message ID creation, stable UUIDv5 operations, canonical JSON, and payload hashing in `src/knowflow/domain/common/identity.py`
-- [ ] T009 [P] Define domain/application error codes, retryability, concealed-not-found behavior, and RFC 9457 problem mapping in `src/knowflow/domain/common/errors.py`
-- [ ] T010 [P] Implement monotonic absolute deadlines, remaining-budget propagation, bounded retry policy, and cancellation classifications in `src/knowflow/domain/common/deadlines.py`
-- [ ] T011 Configure async SQLAlchemy engine/session factories, transaction unit-of-work, UTC helpers, naming conventions, and health probes in `src/knowflow/infrastructure/db/session.py`
+- [X] T007 [P] Implement typed environment loading, secret validation, per-runtime settings, and safe defaults in `src/knowflow/config.py`
+- [X] T008 [P] Implement request/workflow/plan/task/operation/message ID creation, stable UUIDv5 operations, canonical JSON, and payload hashing in `src/knowflow/domain/common/identity.py`
+- [X] T009 [P] Define domain/application error codes, retryability, concealed-not-found behavior, and RFC 9457 problem mapping in `src/knowflow/domain/common/errors.py`
+- [X] T010 [P] Implement monotonic absolute deadlines, remaining-budget propagation, bounded retry policy, and cancellation classifications in `src/knowflow/domain/common/deadlines.py`
+- [X] T011 Configure async SQLAlchemy engine/session factories, transaction unit-of-work, UTC helpers, naming conventions, and health probes in `src/knowflow/infrastructure/db/session.py`
 - [ ] T012 [P] Map User, Team, Role, UserRole, LoginSession, and immutable audit records with required constraints in `src/knowflow/infrastructure/db/models/identity.py`
 - [ ] T013 [P] Map Workflow, Plan, PlanTask, PlanDependency, WorkflowCommand, OperationRecord, OutboxEvent, and InboxMessage in `src/knowflow/infrastructure/db/models/workflow.py`
 - [ ] T014 [P] Map Ticket, TicketEvent, Approval, and NotificationDelivery state/version fields and constraints in `src/knowflow/infrastructure/db/models/ticketing.py`
@@ -55,7 +55,7 @@ acceptance checkpoint; tasks use the exact checklist format and repository-relat
 - [ ] T023 Define versioned event envelopes, the event catalog, publisher/consumer ports, and payload hash validation matching `contracts/events.md` in `src/knowflow/domain/messaging/events.py`
 - [ ] T024 Configure structured redacted logs, OpenTelemetry trace/metric providers, context links, and no-op local exporters in `src/knowflow/infrastructure/observability/bootstrap.py`
 - [ ] T025 Build pytest configuration, async database cleanup, seeded users, deterministic adapters, clock control, and dependency overrides in `tests/conftest.py`
-- [ ] T026 [P] Add schema tests for local `$ref` resolution, operation IDs, event examples, state enums, and problem responses in `tests/contract/test_foundation_contracts.py`
+- [X] T026 [P] Add schema tests for local `$ref` resolution, operation IDs, event examples, state enums, and problem responses in `tests/contract/test_foundation_contracts.py`
 
 **Checkpoint**: Migrations apply/rollback, seeded authentication works, foundational contract tests pass,
 and no test/user input can override the trusted access context.
