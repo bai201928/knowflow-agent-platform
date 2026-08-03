@@ -1,0 +1,919 @@
+openapi: 3.1.0
+info:
+  title: KnowFlow API
+  version: 0.1.0
+  description: >-
+    Contract for the two-week KnowFlow MVP. Object-level authorization may intentionally return
+    404 rather than reveal whether an inaccessible resource exists. All IDs are opaque strings.
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local demo
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/token:
+    post:
+      tags: [Authentication]
+      security: []
+      summary: Exchange demo credentials for a short-lived access token
+      operationId: createAccessToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /me:
+    get:
+      tags: [Authentication]
+      summary: Return the current trusted user context
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user and server-derived roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /workflows:
+    post:
+      tags: [Workflows]
+      summary: Reliably accept a natural-language business workflow
+      operationId: createWorkflow
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+      responses:
+        '202':
+          description: Workflow durably accepted; completion is not implied
+          headers:
+            Location:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowAccepted'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+
+    get:
+      tags: [Workflows]
+      summary: List workflows visible to the current user
+      operationId: listWorkflows
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/WorkflowStatus'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Authorized workflow page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowPage'
+
+  /workflows/{workflowId}:
+    get:
+      tags: [Workflows]
+      summary: Read a durable workflow projection and current public result
+      operationId: getWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '200':
+          description: Workflow projection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /workflows/{workflowId}/messages:
+    post:
+      tags: [Workflows]
+      summary: Append a user message or clarification answer to a workflow
+      operationId: appendWorkflowMessage
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowMessageRequest'
+      responses:
+        '202':
+          description: Command durably accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowAccepted'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /workflows/{workflowId}/cancel:
+    post:
+      tags: [Workflows]
+      summary: Request versioned cancellation at the next safe boundary
+      operationId: cancelWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelWorkflowRequest'
+      responses:
+        '202':
+          description: Cancellation command accepted; committed effects remain facts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowAccepted'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /workflows/{workflowId}/events:
+    get:
+      tags: [Workflows]
+      summary: Stream authorized workflow progress using Server-Sent Events
+      operationId: streamWorkflowEvents
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - name: Last-Event-ID
+          in: header
+          required: false
+          description: Last durable sequence observed by the client
+          schema: { type: string }
+      responses:
+        '200':
+          description: >-
+            SSE stream. Each event uses its durable sequence as id, one of the documented event
+            names as event, JSON WorkflowStreamEvent as data, and retry 3000.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /knowledge/queries:
+    post:
+      tags: [Knowledge]
+      summary: Run a permission-filtered knowledge query without business side effects
+      operationId: queryKnowledge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeQueryRequest'
+      responses:
+        '200':
+          description: Grounded answer or explicit insufficient-evidence result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeAnswer'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+
+  /knowledge/citations/{segmentId}:
+    get:
+      tags: [Knowledge]
+      summary: Reauthorize and return one citation segment with source location
+      operationId: getCitation
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Authorized citation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CitationDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tickets:
+    post:
+      tags: [Tickets]
+      summary: Create one authorized ticket idempotently
+      operationId: createTicket
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTicketRequest'
+      responses:
+        '201':
+          description: Ticket created or the original result replayed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    get:
+      tags: [Tickets]
+      summary: List tickets under server-enforced object scope
+      operationId: listTickets
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TicketStatus'
+        - name: severity
+          in: query
+          schema:
+            $ref: '#/components/schemas/TicketSeverity'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Authorized ticket page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketPage'
+
+  /tickets/{ticketId}:
+    get:
+      tags: [Tickets]
+      summary: Get one authorized ticket
+      operationId: getTicket
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      responses:
+        '200':
+          description: Ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Tickets]
+      summary: Update one ticket using optimistic concurrency
+      operationId: updateTicket
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTicketRequest'
+      responses:
+        '200':
+          description: Updated ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '202':
+          description: Sensitive update converted into a workflow awaiting approval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowAccepted'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /approvals:
+    get:
+      tags: [Approvals]
+      summary: List approvals visible to the current actor
+      operationId: listApprovals
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ApprovalStatus'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Authorized approval page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalPage'
+
+  /approvals/{approvalId}:
+    get:
+      tags: [Approvals]
+      summary: Get the exact normalized action awaiting or holding a decision
+      operationId: getApproval
+      parameters:
+        - $ref: '#/components/parameters/ApprovalId'
+      responses:
+        '200':
+          description: Approval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /approvals/{approvalId}/decision:
+    post:
+      tags: [Approvals]
+      summary: Decide a pending approval exactly once and request workflow resume
+      operationId: decideApproval
+      parameters:
+        - $ref: '#/components/parameters/ApprovalId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecisionRequest'
+      responses:
+        '200':
+          description: Decision persisted; repeated identical decisions return the same resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /documents:
+    post:
+      tags: [Documents]
+      summary: Register a governed knowledge document and queue its first version
+      operationId: createDocument
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '202':
+          description: Document registered and ingestion durably queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    get:
+      tags: [Documents]
+      summary: List documents visible to the current user
+      operationId: listDocuments
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Authorized document page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentPage'
+
+  /documents/{documentId}:
+    get:
+      tags: [Documents]
+      summary: Read document metadata and current processing state
+      operationId: getDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Document metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 16–128 character stable identity for one normalized business intent
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    WorkflowId:
+      name: workflowId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    TicketId:
+      name: ticketId
+      in: path
+      required: true
+      description: UUID or human ticket key
+      schema: { type: string, minLength: 1, maxLength: 64 }
+    ApprovalId:
+      name: approvalId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid, expired, or revoked authentication
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: Authenticated but role-level operation is not permitted
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Resource absent or intentionally concealed by object authorization
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: Version conflict, terminal state, or idempotency key reused with different payload
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ValidationError:
+      description: Schema or deterministic business validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    RateLimited:
+      description: Request was not accepted because bounded capacity was unavailable
+      headers:
+        Retry-After:
+          schema: { type: integer, minimum: 1 }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unavailable:
+      description: Required dependency unavailable and work was not durably accepted
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [username, password]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 64 }
+        password: { type: string, minLength: 8, maxLength: 200, format: password }
+
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in, session_id]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, const: bearer }
+        expires_in: { type: integer, minimum: 1 }
+        session_id: { type: string, format: uuid }
+
+    CurrentUser:
+      type: object
+      required: [id, username, display_name, roles, acl_version]
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        display_name: { type: string }
+        roles:
+          type: array
+          items: { type: string, enum: [EMPLOYEE, OPERATOR, APPROVER, ADMIN] }
+        team_id: { type: [string, 'null'], format: uuid }
+        acl_version: { type: integer, minimum: 1 }
+
+    CreateWorkflowRequest:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        message: { type: string, minLength: 1, maxLength: 10000 }
+        interaction_deadline_seconds: { type: integer, minimum: 3, maximum: 60, default: 15 }
+
+    WorkflowMessageRequest:
+      type: object
+      additionalProperties: false
+      required: [content, expected_version]
+      properties:
+        content: { type: string, minLength: 1, maxLength: 10000 }
+        expected_version: { type: integer, minimum: 1 }
+
+    CancelWorkflowRequest:
+      type: object
+      additionalProperties: false
+      required: [expected_version, reason]
+      properties:
+        expected_version: { type: integer, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+
+    WorkflowAccepted:
+      type: object
+      required: [workflow_id, status, version, accepted_at, status_url, events_url]
+      properties:
+        workflow_id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/WorkflowStatus' }
+        version: { type: integer, minimum: 1 }
+        accepted_at: { type: string, format: date-time }
+        status_url: { type: string }
+        events_url: { type: string }
+        replayed: { type: boolean, default: false }
+
+    WorkflowStatus:
+      type: string
+      enum:
+        - RECEIVED
+        - CLARIFYING
+        - PLANNED
+        - RUNNING
+        - WAITING_APPROVAL
+        - WAITING_RETRY
+        - CANCEL_REQUESTED
+        - NEEDS_REVIEW
+        - SUCCEEDED
+        - FAILED
+        - REJECTED
+        - CANCELLED
+        - EXPIRED
+
+    WorkflowSummary:
+      type: object
+      required: [id, status, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/WorkflowStatus' }
+        version: { type: integer }
+        title: { type: [string, 'null'] }
+        pending_approval_id: { type: [string, 'null'], format: uuid }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    WorkflowDetail:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowSummary'
+        - type: object
+          properties:
+            plan:
+              oneOf:
+                - $ref: '#/components/schemas/PlanView'
+                - type: 'null'
+            result: { type: [object, 'null'], additionalProperties: true }
+            error: { type: [object, 'null'], additionalProperties: true }
+
+    WorkflowPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/WorkflowSummary' } }
+        next_cursor: { type: [string, 'null'] }
+
+    PlanView:
+      type: object
+      required: [id, version, risk_level, tasks]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer, minimum: 1 }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanTaskView'
+
+    PlanTaskView:
+      type: object
+      required: [id, intent, status, risk_level]
+      properties:
+        id: { type: string, format: uuid }
+        intent:
+          type: string
+          enum: [KNOWLEDGE_QUERY, TICKET_CREATE, TICKET_QUERY, TICKET_UPDATE, NOTIFICATION_SEND, OPS_ACTION]
+        status: { type: string }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        summary: { type: string }
+
+    WorkflowStreamEvent:
+      type: object
+      required: [sequence, workflow_id, event, occurred_at, data]
+      properties:
+        sequence: { type: integer, minimum: 1 }
+        workflow_id: { type: string, format: uuid }
+        event:
+          type: string
+          enum:
+            - workflow.accepted
+            - plan.created
+            - clarification.required
+            - task.started
+            - task.completed
+            - approval.required
+            - workflow.retrying
+            - workflow.needs_review
+            - workflow.completed
+            - workflow.failed
+        occurred_at: { type: string, format: date-time }
+        data: { type: object, additionalProperties: true }
+
+    KnowledgeQueryRequest:
+      type: object
+      additionalProperties: false
+      required: [query]
+      properties:
+        query: { type: string, minLength: 1, maxLength: 5000 }
+        max_citations: { type: integer, minimum: 1, maximum: 10, default: 5 }
+
+    KnowledgeAnswer:
+      type: object
+      required: [answer, disposition, citations, retrieval_version]
+      properties:
+        answer: { type: string }
+        disposition: { type: string, enum: [ANSWERED, INSUFFICIENT_EVIDENCE, DEGRADED] }
+        citations:
+          type: array
+          items: { $ref: '#/components/schemas/Citation' }
+        retrieval_version: { type: string }
+
+    Citation:
+      type: object
+      required: [segment_id, document_id, document_title, source_location]
+      properties:
+        segment_id: { type: string, format: uuid }
+        document_id: { type: string, format: uuid }
+        document_title: { type: string }
+        source_location: { type: string }
+        excerpt: { type: string, maxLength: 500 }
+
+    CitationDetail:
+      allOf:
+        - $ref: '#/components/schemas/Citation'
+        - type: object
+          required: [document_version, text]
+          properties:
+            document_version: { type: integer, minimum: 1 }
+            section_path: { type: [string, 'null'] }
+            text: { type: string }
+
+    CreateTicketRequest:
+      type: object
+      additionalProperties: false
+      required: [title, description, severity]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, minLength: 1, maxLength: 10000 }
+        severity: { $ref: '#/components/schemas/TicketSeverity' }
+        assigned_team_id: { type: [string, 'null'], format: uuid }
+
+    UpdateTicketRequest:
+      type: object
+      additionalProperties: false
+      required: [expected_version]
+      minProperties: 2
+      properties:
+        expected_version: { type: integer, minimum: 1 }
+        status: { $ref: '#/components/schemas/TicketStatus' }
+        severity: { $ref: '#/components/schemas/TicketSeverity' }
+        assignee_user_id: { type: [string, 'null'], format: uuid }
+        assigned_team_id: { type: [string, 'null'], format: uuid }
+        comment: { type: [string, 'null'], maxLength: 2000 }
+
+    Ticket:
+      type: object
+      required: [id, key, title, description, severity, status, created_by_user_id, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        key: { type: string }
+        title: { type: string }
+        description: { type: string }
+        severity: { $ref: '#/components/schemas/TicketSeverity' }
+        status: { $ref: '#/components/schemas/TicketStatus' }
+        created_by_user_id: { type: string, format: uuid }
+        assigned_team_id: { type: [string, 'null'], format: uuid }
+        assignee_user_id: { type: [string, 'null'], format: uuid }
+        version: { type: integer, minimum: 1 }
+        sla_deadline: { type: [string, 'null'], format: date-time }
+        sla_version: { type: integer, minimum: 0 }
+        escalation_level: { type: integer, minimum: 0 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    TicketStatus:
+      type: string
+      enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED, CANCELLED]
+    TicketSeverity:
+      type: string
+      enum: [P1, P2, P3, P4]
+    TicketPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Ticket' } }
+        next_cursor: { type: [string, 'null'] }
+
+    ApprovalStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED, EXPIRED, INVALIDATED]
+    Approval:
+      type: object
+      required:
+        - id
+        - workflow_id
+        - action_type
+        - resource_type
+        - resource_id
+        - payload_hash
+        - requester_user_id
+        - status
+        - expires_at
+        - version
+      properties:
+        id: { type: string, format: uuid }
+        workflow_id: { type: string, format: uuid }
+        action_type: { type: string }
+        resource_type: { type: string }
+        resource_id: { type: string }
+        resource_version: { type: [integer, 'null'] }
+        normalized_parameters: { type: object, additionalProperties: true }
+        payload_hash: { type: string }
+        requester_user_id: { type: string, format: uuid }
+        approver_user_id: { type: [string, 'null'], format: uuid }
+        status: { $ref: '#/components/schemas/ApprovalStatus' }
+        decision_reason: { type: [string, 'null'] }
+        expires_at: { type: string, format: date-time }
+        decided_at: { type: [string, 'null'], format: date-time }
+        version: { type: integer, minimum: 1 }
+    ApprovalDecisionRequest:
+      type: object
+      additionalProperties: false
+      required: [decision, expected_version]
+      properties:
+        decision: { type: string, enum: [APPROVE, REJECT] }
+        expected_version: { type: integer, minimum: 1 }
+        reason: { type: [string, 'null'], maxLength: 1000 }
+    ApprovalPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Approval' } }
+        next_cursor: { type: [string, 'null'] }
+
+    Visibility:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode: { type: string, enum: [PUBLIC, ROLE, TEAM, EXPLICIT] }
+        role_ids: { type: array, items: { type: string, format: uuid }, default: [] }
+        team_ids: { type: array, items: { type: string, format: uuid }, default: [] }
+        user_ids: { type: array, items: { type: string, format: uuid }, default: [] }
+    CreateDocumentRequest:
+      type: object
+      additionalProperties: false
+      required: [title, source_location, media_type, checksum_sha256, visibility]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 300 }
+        source_location: { type: string, minLength: 1, maxLength: 1000 }
+        media_type: { type: string, enum: [text/plain, text/markdown, application/pdf] }
+        checksum_sha256: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
+        visibility: { $ref: '#/components/schemas/Visibility' }
+    Document:
+      type: object
+      required: [id, title, source_location, visibility_mode, status, version_status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        source_location: { type: string }
+        visibility_mode: { type: string, enum: [PUBLIC, ROLE, TEAM, EXPLICIT] }
+        status: { type: string, enum: [ACTIVE, ARCHIVED] }
+        active_version: { type: [integer, 'null'] }
+        version_status:
+          type: string
+          enum: [REGISTERED, QUEUED, PARSING, INDEXING, READY, FAILED, SUPERSEDED]
+        failure_stage: { type: [string, 'null'] }
+        failure_summary: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+    DocumentPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Document' } }
+        next_cursor: { type: [string, 'null'] }
+
+    Problem:
+      type: object
+      required: [type, title, status, code, request_id]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: [string, 'null'] }
+        code: { type: string }
+        request_id: { type: string }
+        retryable: { type: boolean, default: false }
+        current_version: { type: [integer, 'null'] }
+        fields:
+          type: array
+          items:
+            type: object
+            required: [field, code]
+            properties:
+              field: { type: string }
+              code: { type: string }
+              message: { type: string }
