@@ -1,6 +1,6 @@
 # Implementation Plan: KnowFlow Reliable Agent Platform
 
-**Branch**: `001-knowflow-agent-platform` | **Date**: 2026-08-03 | **Spec**: [spec.md](spec.md)
+**Branch**: `agent/implement-knowflow-mvp` | **Date**: 2026-08-03 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/001-knowflow-agent-platform/spec.md`
 
@@ -24,7 +24,9 @@ demo UI, real failure/replay tests, and reproducible quality/load reports.
 **Primary Dependencies**: FastAPI with native SSE, Uvicorn, Pydantic v2/pydantic-settings,
 LangGraph, `langgraph-checkpoint-redis`, SQLAlchemy 2, Alembic, `asyncmy`, `redis`, `pymilvus`,
 `rocketmq-python-client` from Apache RocketMQ's 5.x gRPC client repository, `httpx`, PyJWT,
-`pwdlib[argon2]`, OpenTelemetry Python, Langfuse Python v4, Jinja2, structlog, tenacity, and Typer
+`pwdlib[argon2]`, `pypdf` for bounded PDF text extraction, OpenTelemetry Python, Langfuse Python v4,
+Jinja2, structlog, tenacity, and Typer. PDF parsing rejects encrypted, oversized, or textless files
+with stable diagnostics; OCR and active-content execution are out of scope.
 
 **Storage**: MySQL 8.4 LTS for business truth; Redis 8 for checkpoint/session/limit/cache state;
 Milvus 2.5+ with MinIO and etcd for derived dense/BM25 indexes; local files only for bounded seed
@@ -70,6 +72,7 @@ four process types that can be multiplied locally to demonstrate cross-process c
 | At-least-once, non-duplicated effects | PASS | No exactly-once claim; duplicate delivery and replay are explicit contract/test cases |
 | Deadline, backpressure, cancellation | PASS | Absolute deadlines, bounded queues, local/global limits, and pre/post durable-acceptance cancellation are designed |
 | Evidence before claims | PASS | Test layout includes security, contract, E2E, fault, evaluation, and load evidence; reports retain context |
+| Governed parallel execution | PASS | Constitution 1.1.0 restricts concurrency to `[P]`; the main agent reviews diffs/tests and owns commits, pushes, and merges |
 
 No constitutional violations require a complexity exception.
 
@@ -193,6 +196,14 @@ reports/
 infrastructure dependency direction. API and workers share schemas and use cases but have distinct
 entry points, connection pools, limits, and scaling. A minimal server-rendered UI avoids a second
 frontend toolchain while still demonstrating login, chat/events, tickets, approvals, and traces.
+
+The source tree also includes `application/audit/`, `infrastructure/operations/`, and
+`infrastructure/testing/`; reports include `reports/usability/`. The API contract exposes immutable
+document-version creation/detail/retry operations, resource-scoped workflow and ticket audit
+timelines, hybrid automatic/manual recovery review and decisions, and notification summaries plus
+dedicated delivery queries. These boundaries are tested before their implementations. Usability
+evidence uses five participants and 20 scripted attempts, with 18 successful attempts required and
+every in-attempt hint counted as intervention.
 
 ## Key Runtime Boundaries
 

@@ -1,15 +1,9 @@
 <!--
 Sync Impact Report
-- Version change: template (unratified) -> 1.0.0
-- Modified principles:
-  - Template Principle 1 -> I. Two-Week, Interview-Ready Scope
-  - Template Principle 2 -> II. Python-First Boundaries and State Ownership
-  - Template Principle 3 -> III. Controlled Agent Authority and Least Privilege
-  - Template Principle 4 -> IV. Durable, Idempotent, Recoverable Execution
-  - Template Principle 5 -> V. Evidence Before Claims
-- Added sections:
-  - MVP Architecture and Scope Constraints
-  - Delivery Workflow and Quality Gates
+- Version change: 1.0.0 -> 1.1.0
+- Modified sections:
+  - Delivery Workflow and Quality Gates (parallel-agent governance)
+  - Governance (main-agent integration accountability)
 - Removed sections: none
 - Follow-up TODOs: none
 -->
@@ -99,6 +93,18 @@ environment and dataset details.
    versioned and rerun against the relevant locked regression set.
 6. Complexity beyond the modular-monolith MVP MUST include a written reason, rejected simpler
    alternative, and measurable benefit; otherwise it MUST be deferred.
+7. Only tasks explicitly marked `[P]` MAY execute concurrently. Tasks that touch the same file,
+   schema, transaction boundary, or depend on unfinished work MUST execute serially even if they
+   otherwise appear separable.
+8. The main agent MUST own the shared plan, task assignment, artifact integration, validation,
+   commits, pushes, and merges. A subagent MUST NOT commit, push, or merge unless the main agent
+   gives an explicit, scoped instruction.
+9. Every subagent handoff MUST identify changed files, verification performed, unresolved errors,
+   and assumptions. The main agent MUST inspect the diff and run relevant verification before
+   marking delegated tasks complete.
+10. Parallel execution MUST NOT weaken security, evidence, human-approval, or release gates.
+    Runtime model selection is an execution setting and MUST NOT alter artifact precedence or
+    project governance.
 
 ## Governance
 
@@ -110,4 +116,4 @@ expanded obligations, and PATCH for non-semantic clarification. Every planning p
 pre-design and post-design constitution check. Every implementation review MUST verify affected
 security, reliability, evidence, and scope invariants; unexplained violations block completion.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-03 | **Last Amended**: 2026-08-03
+**Version**: 1.1.0 | **Ratified**: 2026-08-03 | **Last Amended**: 2026-08-03

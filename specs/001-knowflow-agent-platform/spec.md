@@ -180,8 +180,11 @@ separate quality and capacity conclusions.
   answers with source-level citations or an explicit evidence-insufficient response.
 - **FR-010**: The system MUST enforce knowledge visibility before candidate evidence is selected,
   before evidence is returned, and whenever a citation target is opened.
-- **FR-011**: Administrators MUST be able to register document versions, visibility, source,
-  processing status, and active/inactive state, and failed ingestion MUST be diagnosable and retryable.
+- **FR-011**: Administrators MUST be able to register a document, create immutable subsequent
+  versions, read one version's processing diagnostics, and retry one failed version through explicit
+  version-scoped operations. A retry MUST retain the version identity and content checksum, create a
+  new ingestion attempt, require an idempotency key, reject non-failed versions, and atomically switch
+  the active version only after parsing and indexing complete.
 - **FR-012**: Authorized users MUST be able to create, query, and update tickets while respecting
   valid state transitions and concurrent-version conflicts.
 - **FR-013**: Every side-effecting business task MUST have a stable identity and MUST return its
@@ -197,8 +200,10 @@ separate quality and capacity conclusions.
   reliable logical events that remain deliverable after the original request process exits.
 - **FR-019**: Repeated delivery of the same logical event MUST be observable but MUST NOT duplicate
   the consumer's local business effect.
-- **FR-020**: Notifications and SLA escalation checks MUST expose pending, delivered, retrying,
-  failed, and uncertain states without changing the underlying ticket truth.
+- **FR-020**: Workflow and ticket details MUST include an aggregate notification summary. Authorized
+  users MUST also be able to list and read individual notification deliveries with `PENDING`,
+  `SENDING`, `DELIVERED`, `RETRYING`, `UNKNOWN`, or `FAILED` status, attempt count, next retry time,
+  and last redacted error; notification state MUST NOT change the underlying ticket truth.
 - **FR-021**: SLA escalation MUST re-check the current ticket deadline, resolution state, and SLA
   version before applying an escalation, so obsolete triggers have no effect.
 - **FR-022**: Each external interaction MUST obey an end-to-end deadline, bounded concurrency, and a
@@ -206,9 +211,15 @@ separate quality and capacity conclusions.
 - **FR-023**: Pure read work MAY stop after client disconnect, but durably accepted work MUST remain
   queryable and continue until terminal, explicitly cancelled, or awaiting human action.
 - **FR-024**: Users MUST be able to query workflow progress and final results without returning to
-  the process that accepted the request.
-- **FR-025**: The system MUST maintain an audit trail that links actor, request, workflow, plan
-  version, task, approval, operation, logical event, evidence, decision, and outcome.
+  the process that accepted the request. Operators MUST be able to inspect recovery review details
+  and submit an idempotent, version-checked decision: low-risk facts MAY be resumed or safely retried;
+  high-risk, ambiguous, changed-permission, or changed-resource cases MUST remain `NEEDS_REVIEW` until
+  an operator chooses `RESUME_FROM_FACTS`, `RETRY_SAFE_STEP`, `MARK_FAILED`, or
+  `REQUIRE_NEW_APPROVAL` with a reason. Every decision MUST be audited.
+- **FR-025**: The system MUST maintain an append-only audit trail that links actor, request, workflow,
+  plan version, task, approval, operation, logical event, evidence, decision, and outcome. Authorized
+  resource-scoped timeline queries MUST be available for both a workflow and a ticket, ordered by a
+  stable sequence and cursor-paginated without exposing inaccessible linked objects.
 - **FR-026**: The system MUST expose enough timing, queue, error, model-use, recovery, and duplicate
   information to explain why a workflow succeeded, failed, waited, retried, or degraded.
 - **FR-027**: The project MUST provide reproducible datasets and evaluations for intent/slot quality,
@@ -286,8 +297,11 @@ separate quality and capacity conclusions.
 - **SC-007**: On the locked knowledge evaluation set, retrieval Recall@10 reaches at least 0.85,
   material answer claims have valid citations in at least 0.90 of evaluated answers, and protected
   evidence exposure remains zero.
-- **SC-008**: At least 90% of representative users complete knowledge, ticket, clarification, and
-  approval tasks without developer intervention during scripted usability validation.
+- **SC-008**: In a scripted usability validation with five representative participants and four
+  attempts per participant (20 attempts total: knowledge, ticket, clarification, and approval), at
+  least 18 attempts MUST complete without developer intervention. The protocol MUST record task,
+  participant role, start/end time, completion, intervention, observed error, and anonymized notes;
+  setup coaching is allowed before timing, but hints during an attempt count as intervention.
 - **SC-009**: Under a documented controlled-load test with 20 concurrent users, at least 95% of
   accepted read requests finish within their declared interaction deadline, with no duplicated
   business effects and no unbounded queue growth.

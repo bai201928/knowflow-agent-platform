@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: KnowFlow API
-  version: 0.1.0
+  version: 0.2.0
   description: >-
     Contract for the two-week KnowFlow MVP. Object-level authorization may intentionally return
     404 rather than reveal whether an inaccessible resource exists. All IDs are opaque strings.
@@ -195,6 +195,63 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /workflows/{workflowId}/audit-events:
+    get:
+      tags: [Audit]
+      summary: Read the authorized append-only audit timeline for one workflow
+      operationId: listWorkflowAuditEvents
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Stable sequence-ordered audit page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuditEventPage' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /workflows/{workflowId}/recovery-review:
+    get:
+      tags: [Recovery]
+      summary: Inspect durable facts, uncertainty, risk, and permitted recovery actions
+      operationId: getWorkflowRecoveryReview
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '200':
+          description: Recovery review for an authorized operator
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RecoveryReview' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /workflows/{workflowId}/recovery-decisions:
+    post:
+      tags: [Recovery]
+      summary: Apply one audited, version-checked operator recovery decision
+      operationId: decideWorkflowRecovery
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecoveryDecisionRequest' }
+      responses:
+        '202':
+          description: Recovery decision durably accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowAccepted' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
   /knowledge/queries:
     post:
       tags: [Knowledge]
@@ -338,6 +395,23 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  /tickets/{ticketId}/audit-events:
+    get:
+      tags: [Audit]
+      summary: Read the authorized append-only audit timeline for one ticket
+      operationId: listTicketAuditEvents
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Stable sequence-ordered audit page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuditEventPage' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /approvals:
     get:
       tags: [Approvals]
@@ -462,6 +536,110 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /documents/{documentId}/versions:
+    post:
+      tags: [Documents]
+      summary: Create and queue an immutable subsequent document version
+      operationId: createDocumentVersion
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDocumentVersionRequest' }
+      responses:
+        '202':
+          description: Immutable version registered and ingestion queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentVersion' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /documents/{documentId}/versions/{versionId}:
+    get:
+      tags: [Documents]
+      summary: Read one document version and its redacted processing diagnostics
+      operationId: getDocumentVersion
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/DocumentVersionId'
+      responses:
+        '200':
+          description: Authorized immutable document version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentVersion' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /documents/{documentId}/versions/{versionId}/retry:
+    post:
+      tags: [Documents]
+      summary: Queue a new ingestion attempt for one failed immutable version
+      operationId: retryDocumentVersion
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/DocumentVersionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RetryDocumentVersionRequest' }
+      responses:
+        '202':
+          description: Retry attempt durably queued without changing version content
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentVersion' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /notification-deliveries:
+    get:
+      tags: [Notifications]
+      summary: List notification deliveries visible through workflow or ticket scope
+      operationId: listNotificationDeliveries
+      parameters:
+        - name: workflow_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: ticket_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/NotificationDeliveryStatus' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Authorized delivery page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationDeliveryPage' }
+
+  /notification-deliveries/{deliveryId}:
+    get:
+      tags: [Notifications]
+      summary: Read one authorized notification delivery and its redacted outcome
+      operationId: getNotificationDelivery
+      parameters:
+        - $ref: '#/components/parameters/NotificationDeliveryId'
+      responses:
+        '200':
+          description: Authorized delivery detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationDelivery' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -497,6 +675,16 @@ components:
       schema: { type: string, format: uuid }
     DocumentId:
       name: documentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DocumentVersionId:
+      name: versionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    NotificationDeliveryId:
+      name: deliveryId
       in: path
       required: true
       schema: { type: string, format: uuid }
@@ -637,13 +825,14 @@ components:
 
     WorkflowSummary:
       type: object
-      required: [id, status, version, created_at, updated_at]
+      required: [id, status, version, notification_summary, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         status: { $ref: '#/components/schemas/WorkflowStatus' }
         version: { type: integer }
         title: { type: [string, 'null'] }
         pending_approval_id: { type: [string, 'null'], format: uuid }
+        notification_summary: { $ref: '#/components/schemas/NotificationSummary' }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -776,7 +965,7 @@ components:
 
     Ticket:
       type: object
-      required: [id, key, title, description, severity, status, created_by_user_id, version, created_at, updated_at]
+      required: [id, key, title, description, severity, status, created_by_user_id, version, notification_summary, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         key: { type: string }
@@ -791,6 +980,7 @@ components:
         sla_deadline: { type: [string, 'null'], format: date-time }
         sla_version: { type: integer, minimum: 0 }
         escalation_level: { type: integer, minimum: 0 }
+        notification_summary: { $ref: '#/components/schemas/NotificationSummary' }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -873,6 +1063,21 @@ components:
         media_type: { type: string, enum: [text/plain, text/markdown, application/pdf] }
         checksum_sha256: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
         visibility: { $ref: '#/components/schemas/Visibility' }
+    CreateDocumentVersionRequest:
+      type: object
+      additionalProperties: false
+      required: [source_location, media_type, checksum_sha256]
+      properties:
+        source_location: { type: string, minLength: 1, maxLength: 1000 }
+        media_type: { type: string, enum: [text/plain, text/markdown, application/pdf] }
+        checksum_sha256: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
+    RetryDocumentVersionRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, expected_attempt]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 500 }
+        expected_attempt: { type: integer, minimum: 1 }
     Document:
       type: object
       required: [id, title, source_location, visibility_mode, status, version_status, created_at]
@@ -895,6 +1100,113 @@ components:
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/Document' } }
         next_cursor: { type: [string, 'null'] }
+
+    DocumentVersion:
+      type: object
+      required: [id, document_id, version_number, source_location, media_type, checksum_sha256, status, attempt_count, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        document_id: { type: string, format: uuid }
+        version_number: { type: integer, minimum: 1 }
+        source_location: { type: string }
+        media_type: { type: string }
+        checksum_sha256: { type: string }
+        status:
+          type: string
+          enum: [REGISTERED, QUEUED, PARSING, INDEXING, READY, FAILED, SUPERSEDED]
+        attempt_count: { type: integer, minimum: 1 }
+        failure_stage: { type: [string, 'null'] }
+        failure_code: { type: [string, 'null'] }
+        failure_summary: { type: [string, 'null'] }
+        active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        ready_at: { type: [string, 'null'], format: date-time }
+
+    NotificationDeliveryStatus:
+      type: string
+      enum: [PENDING, SENDING, DELIVERED, RETRYING, UNKNOWN, FAILED]
+    NotificationSummary:
+      type: object
+      required: [total, pending, delivered, retrying, unknown, failed]
+      properties:
+        total: { type: integer, minimum: 0 }
+        pending: { type: integer, minimum: 0 }
+        delivered: { type: integer, minimum: 0 }
+        retrying: { type: integer, minimum: 0 }
+        unknown: { type: integer, minimum: 0 }
+        failed: { type: integer, minimum: 0 }
+    NotificationDelivery:
+      type: object
+      required: [id, status, channel, recipient_scope, attempt_count, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        workflow_id: { type: [string, 'null'], format: uuid }
+        ticket_id: { type: [string, 'null'], format: uuid }
+        status: { $ref: '#/components/schemas/NotificationDeliveryStatus' }
+        channel: { type: string, enum: [EMAIL_SANDBOX] }
+        recipient_scope: { type: string }
+        attempt_count: { type: integer, minimum: 0 }
+        next_retry_at: { type: [string, 'null'], format: date-time }
+        last_error_code: { type: [string, 'null'] }
+        last_error_summary: { type: [string, 'null'] }
+        provider_reference: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    NotificationDeliveryPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/NotificationDelivery' } }
+        next_cursor: { type: [string, 'null'] }
+
+    AuditEvent:
+      type: object
+      required: [id, sequence, actor_id, action, outcome, occurred_at]
+      properties:
+        id: { type: string, format: uuid }
+        sequence: { type: integer, minimum: 1 }
+        actor_id: { type: string, format: uuid }
+        action: { type: string }
+        outcome: { type: string }
+        workflow_id: { type: [string, 'null'], format: uuid }
+        ticket_id: { type: [string, 'null'], format: uuid }
+        correlation_id: { type: [string, 'null'] }
+        reason: { type: [string, 'null'] }
+        metadata: { type: object, additionalProperties: true }
+        occurred_at: { type: string, format: date-time }
+    AuditEventPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AuditEvent' } }
+        next_cursor: { type: [string, 'null'] }
+
+    RecoveryReview:
+      type: object
+      required: [workflow_id, workflow_version, risk_level, reason_code, durable_facts, permitted_actions]
+      properties:
+        workflow_id: { type: string, format: uuid }
+        workflow_version: { type: integer, minimum: 1 }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        reason_code: { type: string }
+        durable_facts: { type: object, additionalProperties: true }
+        uncertain_operations:
+          type: array
+          items: { type: object, additionalProperties: true }
+        permitted_actions:
+          type: array
+          items: { $ref: '#/components/schemas/RecoveryAction' }
+    RecoveryAction:
+      type: string
+      enum: [RESUME_FROM_FACTS, RETRY_SAFE_STEP, MARK_FAILED, REQUIRE_NEW_APPROVAL]
+    RecoveryDecisionRequest:
+      type: object
+      additionalProperties: false
+      required: [action, expected_workflow_version, reason]
+      properties:
+        action: { $ref: '#/components/schemas/RecoveryAction' }
+        expected_workflow_version: { type: integer, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 1000 }
 
     Problem:
       type: object

@@ -64,7 +64,7 @@ and no test/user input can override the trusted access context.
 
 ## Phase 3: User Story 1 — Resolve an Incident Through One Reliable Request (Priority: P1) 🎯 MVP
 
-**Goal**: Complete the flagship request from cited diagnosis through exactly-once business effects,
+**Goal**: Complete the flagship request from cited diagnosis through at-least-once delivery with non-duplicated business effects,
 notification, approval pause/resume, and one sandbox operation.
 
 **Independent Test**: Submit the canonical RocketMQ backlog request as an employee, approve as an
@@ -73,7 +73,7 @@ and auditable terminal workflow even after repeated submits/resumes.
 
 ### Tests for User Story 1
 
-- [ ] T027 [P] [US1] Write failing REST/SSE contract tests for workflow creation/status/messages/events and approval decision endpoints in `tests/contract/test_workflow_approval_contract.py`
+- [ ] T027 [P] [US1] Write failing REST/SSE contract tests for workflow creation/status/messages/events, workflow audit timeline, recovery review/decision, and approval decision endpoints in `tests/contract/test_workflow_approval_contract.py`
 - [ ] T028 [P] [US1] Write a failing end-to-end canonical incident/approval scenario with exact final invariants in `tests/e2e/test_flagship_incident_workflow.py`
 - [ ] T029 [P] [US1] Write failing ambiguity/missing-slot tests proving no write effect occurs before clarification in `tests/integration/test_clarification_guard.py`
 - [ ] T030 [P] [US1] Write failing repeated request, duplicate approval, and concurrent resume tests for one business effect in `tests/integration/test_flagship_idempotency.py`
@@ -121,19 +121,19 @@ unanswerable, stale-version, cache-scope, indirect-injection, and unauthorized c
 
 ### Tests for User Story 2
 
-- [ ] T057 [P] [US2] Write failing document/knowledge/citation OpenAPI contract tests in `tests/contract/test_knowledge_document_contract.py`
+- [ ] T057 [P] [US2] Write failing document/immutable-version/detail/version-retry plus knowledge/citation OpenAPI contract tests in `tests/contract/test_knowledge_document_contract.py`
 - [ ] T058 [P] [US2] Write failing paired-document ACL, cache-scope, citation reauthorization, and trace-redaction tests in `tests/integration/test_knowledge_acl.py`
 - [ ] T059 [P] [US2] Write failing ingestion-version, parse failure/retry, hybrid retrieval, citation, refusal, and prompt-injection E2E tests in `tests/e2e/test_knowledge_story.py`
 
 ### Implementation for User Story 2
 
 - [ ] T060 [P] [US2] Implement bounded plain-text/Markdown/PDF parsing, heading-aware chunking, hashes, and deterministic segment IDs in `src/knowflow/application/knowledge/ingestion.py`
-- [ ] T061 [US2] Implement document registration, ACL grants, version lifecycle, retry authorization, and atomic active-version switching in `src/knowflow/application/knowledge/documents.py`
+- [ ] T061 [US2] Implement document registration, immutable version creation/detail, ACL grants, failed-version retry attempts with stable checksums/idempotency, and atomic ready-version switching in `src/knowflow/application/knowledge/documents.py`
 - [ ] T062 [US2] Implement Inbox-deduped parse/index consumption, stage diagnostics, batch embeddings, completeness checks, and retry/dead behavior in `src/knowflow/workers/documents.py`
 - [ ] T063 [US2] Add document-version rebuild, compact ACL metadata refresh, post-retrieval reauthorization, and safe cache keys to `src/knowflow/infrastructure/retrieval/milvus.py`
 - [ ] T064 [US2] Implement context budgeting, evidence numbering, untrusted-document boundaries, grounded answer schema, and server-side citation validation in `src/knowflow/application/knowledge/answering.py`
 - [ ] T065 [US2] Implement direct query and citation endpoints with current ACL/version checks in `src/knowflow/api/routes/knowledge.py`
-- [ ] T066 [US2] Implement admin document register/list/get/retry endpoints and durable ingestion events in `src/knowflow/api/routes/documents.py`
+- [ ] T066 [US2] Implement admin document register/list/get plus explicit create-version/get-version/retry-version endpoints and durable ingestion events in `src/knowflow/api/routes/documents.py`
 - [ ] T067 [US2] Add bounded public manuals, protected document pairs, answerable/no-answer questions, and expected segment relevance in `data/eval/rag-v1.jsonl`
 
 **Checkpoint**: User Story 2 passes T057–T059 independently through the direct knowledge APIs.
@@ -150,15 +150,15 @@ create, same-version updates, and current/obsolete SLA triggers without the flag
 
 ### Tests for User Story 3
 
-- [ ] T068 [P] [US3] Write failing create/list/get/update ticket contract tests including idempotency and optimistic versions in `tests/contract/test_ticket_contract.py`
+- [ ] T068 [P] [US3] Write failing create/list/get/update ticket, ticket audit timeline, notification summary, and notification-delivery query contract tests including idempotency and optimistic versions in `tests/contract/test_ticket_contract.py`
 - [ ] T069 [P] [US3] Write failing cross-user/team object authorization, same-key/different-payload, and concurrent update tests in `tests/integration/test_ticket_security_concurrency.py`
-- [ ] T070 [P] [US3] Write failing direct ticket lifecycle, notification state, current SLA escalation, and obsolete-trigger E2E tests in `tests/e2e/test_ticket_story.py`
+- [ ] T070 [P] [US3] Write failing direct ticket lifecycle, notification summary/detail state, current SLA escalation, and obsolete-trigger E2E tests in `tests/e2e/test_ticket_story.py`
 
 ### Implementation for User Story 3
 
 - [ ] T071 [P] [US3] Implement access-scoped ticket reads, cursor pagination, versioned conditional updates, state transitions, and conflict snapshots in `src/knowflow/infrastructure/db/repositories/tickets.py`
 - [ ] T072 [US3] Implement direct create/query/update use cases with idempotency, sensitive P1 approval conversion, TicketEvent, AuditEvent, and Outbox boundaries in `src/knowflow/application/tickets/service.py`
-- [ ] T073 [US3] Implement create/list/get/patch endpoints with concealed object authorization and replay metadata in `src/knowflow/api/routes/tickets.py`
+- [ ] T073 [US3] Implement create/list/get/patch endpoints with notification summaries, concealed object authorization, and replay metadata in `src/knowflow/api/routes/tickets.py`
 - [ ] T074 [P] [US3] Define severity deadlines, pause/resume rules, SLA versions, escalation levels, and notification policy in `src/knowflow/domain/tickets/sla.py`
 - [ ] T075 [US3] Schedule stable RocketMQ timed checks whenever the authoritative SLA version changes in `src/knowflow/application/tickets/sla.py`
 - [ ] T076 [US3] Implement Inbox-deduped SLA checks that reread current ticket state/version, apply one escalation, and emit notification Outbox records in `src/knowflow/workers/sla.py`
@@ -197,8 +197,8 @@ recovery state, trace, and report without manual database repair.
 - [ ] T091 [P] [US4] Implement pre/post durable-acceptance disconnect behavior and versioned explicit cancellation/compensation policy in `src/knowflow/application/workflows/cancellation.py`
 - [ ] T092 [US4] Implement scans for missing/stale checkpoints, expired operation/Outbox leases, overdue SLA checks, and UNKNOWN notifications in `src/knowflow/workers/reconciliation.py`
 - [ ] T093 [US4] Implement provider-status reconciliation and terminal handling for ambiguous sandbox notification outcomes in `src/knowflow/application/notifications/reconciliation.py`
-- [ ] T094 [P] [US4] Implement authorized audit timeline, operation replay visibility, duplicate counts, and recovery reason queries in `src/knowflow/api/routes/audit.py`
-- [ ] T095 [US4] Complete workflow cancellation, recovery-review, conflict, and detailed status responses in `src/knowflow/api/routes/workflows.py`
+- [ ] T094 [P] [US4] Implement cursor-paginated, resource-scoped workflow/ticket audit timeline endpoints with operation replay visibility, duplicate counts, recovery reasons, authorization, and linked-object redaction in `src/knowflow/api/routes/audit.py`
+- [ ] T095 [US4] Complete workflow cancellation, recovery-review, idempotent recovery-decision actions (`RESUME_FROM_FACTS`, `RETRY_SAFE_STEP`, `MARK_FAILED`, `REQUIRE_NEW_APPROVAL`), conflict, and detailed status responses in `src/knowflow/api/routes/workflows.py`
 - [ ] T096 [US4] Propagate cancellation through pure retrieval/model TaskGroups while shielding durably accepted commands in `src/knowflow/workflows/graph.py`
 - [ ] T097 [US4] Orchestrate targeted worker/container exits, checkpoint rollback, concurrent resumes, invariant queries, and artifact capture in `scripts/fault-injection.ps1`
 - [ ] T098 [US4] Persist scenario environment, failpoint, trace IDs, database invariants, duplicate observations, and pass/fail summaries in `src/knowflow/evaluation/fault_report.py`
@@ -248,11 +248,11 @@ contain enough provenance to reproduce results and never mix stub capacity with 
 - [ ] T114 [P] Add database/Redis/Milvus/RocketMQ/model dependency degradation and recovery matrix tests in `tests/integration/test_dependency_degradation.py`
 - [ ] T115 Enforce Ruff formatting/lint, mypy strict boundaries, import layering, and secret scanning in `pyproject.toml` and `.pre-commit-config.yaml`
 - [ ] T116 Implement safe start/stop/readiness behavior for all runtime roles in `scripts/dev.ps1`
-- [ ] T117 Implement the canonical demo, approval handoff, duplicate replay, and evidence-link sequence in `scripts/demo.ps1`
+- [ ] T117 Implement the canonical demo, approval handoff, duplicate replay, evidence-link sequence, and five-participant/20-attempt usability protocol template in `scripts/demo.ps1` and `reports/usability/protocol.md`
 - [ ] T118 Validate every command and expected outcome in `specs/001-knowflow-agent-platform/quickstart.md`, correcting documentation without weakening acceptance criteria
 - [ ] T119 Write architecture, state-authority, transaction, threat-model, failure semantics, metrics caveats, and demo instructions in `README.md`
 - [ ] T120 Replace only actually measured placeholders and link raw report artifacts in `KnowFlow_41道核心面试题_5分钟回答.md`
-- [ ] T121 Capture the final contract snapshot, schema revision, test summary, evaluation/load/fault report index, and resume-ready evidence checklist in `reports/README.md`
+- [ ] T121 Capture the final contract snapshot, schema revision, test summary, evaluation/load/fault/usability report index (including 18-of-20 threshold and interventions), and resume-ready evidence checklist in `reports/README.md`
 
 **Final Checkpoint**: The quickstart runs from a clean local environment, every selected story and
 governed test passes, and no documentation contains a fabricated result or production claim.
