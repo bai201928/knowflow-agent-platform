@@ -13,7 +13,9 @@ from typing import Any, Literal
 
 from knowflow.workflows.nodes.incident import (
     approval_node,
+    approval_resume_node,
     clarification_node,
+    error_handler_node,
     final_summary_node,
     notification_node,
     planner_node,
@@ -129,6 +131,12 @@ def build_incident_graph(
             clock=_clock,
         )
 
+    async def _approval_resume(state: WorkflowState) -> dict[str, Any]:
+        return await approval_resume_node(
+            state,
+            clock=_clock,
+        )
+
     async def _sandbox(state: WorkflowState) -> dict[str, Any]:
         return await sandbox_node(
             state,
@@ -142,6 +150,12 @@ def build_incident_graph(
             audit_service=audit_service,
         )
 
+    async def _error_handler(state: WorkflowState) -> dict[str, Any]:
+        return await error_handler_node(
+            state,
+            clock=_clock,
+        )
+
     # ------------------------------------------------------------------
     # Register nodes.
     # ------------------------------------------------------------------
@@ -151,8 +165,10 @@ def build_incident_graph(
     workflow.add_node("ticket", _ticket)
     workflow.add_node("notification", _notification)
     workflow.add_node("approval", _approval)
+    workflow.add_node("approval_resume", _approval_resume)
     workflow.add_node("sandbox", _sandbox)
     workflow.add_node("final_summary", _final_summary)
+    workflow.add_node("error_handler", _error_handler)
 
     # ------------------------------------------------------------------
     # Routing functions.
@@ -193,11 +209,13 @@ def build_incident_graph(
 
     def route_after_approval(
         state: WorkflowState,
-    ) -> Literal["sandbox", "final_summary", "__end__"]:
-        if state.get("status") in ("FAILED", "CANCELLED", "WAITING_APPROVAL"):
+    ) -> Literal["approval_resume", "sandbox", "final_summary", "__end__"]:
+        if state.get("status") in ("FAILED", "CANCELLED"):
+            return "__end__"
+        if state.get("status") == "WAITING_APPROVAL":
             return "__end__"
         if _is_approved(state):
-            return "sandbox"
+            return "approval_resume"
         return "final_summary"
 
     # ------------------------------------------------------------------
@@ -215,7 +233,7 @@ def build_incident_graph(
         },
     )
 
-    workflow.add_edge("clarification", END)
+    workflow.add_edge("clarification", "planner")
 
     workflow.add_conditional_edges(
         "retrieval",
@@ -252,18 +270,37 @@ def build_incident_graph(
         "approval",
         route_after_approval,
         {
+            "approval_resume": "approval_resume",
             "sandbox": "sandbox",
             "final_summary": "final_summary",
             "__end__": END,
         },
     )
 
+    workflow.add_edge("approval_resume", "sandbox")
+
     workflow.add_edge("sandbox", "final_summary")
     workflow.add_edge("final_summary", END)
+    workflow.add_edge("error_handler", END)
 
     return workflow.compile()
 
 
 __all__ = [
     "build_incident_graph",
+    "get_incident_graph",
 ]
+
+_graph_singleton: Any | None = None
+
+
+def get_incident_graph(**deps: Any) -> Any:
+    """Return the compiled incident graph singleton.
+
+    Builds the graph on first call with the provided dependencies.
+    Subsequent calls return the cached compiled graph.
+    """
+    global _graph_singleton
+    if _graph_singleton is None:
+        _graph_singleton = build_incident_graph(**deps)
+    return _graph_singleton

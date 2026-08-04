@@ -305,9 +305,144 @@ async def final_summary_node(
     }
 
 
+async def approval_resume_node(
+    state: WorkflowState,
+    *,
+    clock: Callable[[], datetime],
+) -> dict[str, Any]:
+    """Resume workflow execution after an approval decision is received.
+
+    Reads the latest APPROVAL_RESUME command from the commands list, validates
+    it against the current plan version, and transitions status back to RUNNING.
+    """
+    commands = state.get("commands", [])
+    resume_cmd = None
+    for cmd in reversed(commands):
+        if cmd.get("kind") == "APPROVAL_RESUME":
+            resume_cmd = cmd
+            break
+
+    if resume_cmd is None:
+        return {
+            "status": "NEEDS_REVIEW",
+            "error": {
+                "code": "MISSING_APPROVAL_COMMAND",
+                "retryable": False,
+                "summary": "No APPROVAL_RESUME command found in state",
+                "detail_ref": None,
+            },
+        }
+
+    current_version = state.get("plan_version", 0)
+    cmd_version = resume_cmd.get("accepted_version", 0)
+    if cmd_version != current_version:
+        return {
+            "status": "NEEDS_REVIEW",
+            "error": {
+                "code": "VERSION_MISMATCH",
+                "retryable": False,
+                "summary": f"Command version {cmd_version} != plan version {current_version}",
+                "detail_ref": None,
+            },
+        }
+
+    now = clock()
+    return {
+        "pending_approval": None,
+        "status": "RUNNING",
+        "task_results": [
+            {
+                "id": str(uuid4()),
+                "task_id": "approval_resume",
+                "status": "SUCCEEDED",
+                "result_ref": resume_cmd.get("id"),
+                "summary": f"Approval resumed at {now.isoformat()}",
+                "error_code": None,
+            }
+        ],
+        "audit_refs": [
+            {
+                "id": str(uuid4()),
+                "sequence": 0,
+                "event_type": "approval.resumed",
+            }
+        ],
+    }
+
+
+async def error_handler_node(
+    state: WorkflowState,
+    *,
+    clock: Callable[[], datetime],
+) -> dict[str, Any]:
+    """Handle errors from any workflow node and determine the recovery path.
+
+    Retryable errors transition to NEEDS_REVIEW for operator inspection.
+    Non-retryable errors transition to FAILED immediately.
+    """
+    error = state.get("error")
+    if error is None:
+        return {"status": "RUNNING"}
+
+    now = clock()
+    error_code = error.get("code", "UNKNOWN")
+    error_summary = error.get("summary", "")
+    is_retryable = error.get("retryable", False)
+
+    if is_retryable:
+        return {
+            "status": "NEEDS_REVIEW",
+            "task_results": [
+                {
+                    "id": str(uuid4()),
+                    "task_id": "error_handler",
+                    "status": "PENDING",
+                    "result_ref": error.get("detail_ref"),
+                    "summary": f"Retryable error: {error_code}",
+                    "error_code": error_code,
+                }
+            ],
+            "audit_refs": [
+                {
+                    "id": str(uuid4()),
+                    "sequence": 0,
+                    "event_type": "workflow.error.needs_review",
+                }
+            ],
+        }
+
+    return {
+        "status": "FAILED",
+        "final_summary": (
+            f"Workflow failed at {now.isoformat()}: "
+            f"[{error_code}] {error_summary[:400]}"
+        ),
+        "task_results": [
+            {
+                "id": str(uuid4()),
+                "task_id": "error_handler",
+                "status": "FAILED",
+                "result_ref": None,
+                "summary": f"Non-retryable error: {error_code}",
+                "error_code": error_code,
+            }
+        ],
+        "audit_refs": [
+            {
+                "id": str(uuid4()),
+                "sequence": 0,
+                "event_type": "workflow.error.failed",
+            }
+        ],
+    }
+
+
+
 __all__ = [
     "approval_node",
+    "approval_resume_node",
     "clarification_node",
+    "error_handler_node",
     "final_summary_node",
     "notification_node",
     "planner_node",
