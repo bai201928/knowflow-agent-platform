@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KnowFlow Demo</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: system-ui, sans-serif; background: #0d1117; color: #c9d1d9; margin: 0; padding: 0; }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+  h1 { color: #f0f6fc; font-size: 1.5rem; font-weight: 600; }
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 16px; margin-bottom: 16px; }
+  .panel h2 { color: #f0f6fc; font-size: 1rem; margin: 0 0 12px; }
+  textarea { width: 100%; background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-family: monospace; resize: vertical; min-height: 80px; }
+  button { background: #238636; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 0.875rem; }
+  button:hover { background: #2ea043; }
+  .timeline { max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; }
+  .timeline-entry { padding: 4px 0; border-bottom: 1px solid #21262d; }
+  .timeline-entry .time { color: #8b949e; }
+  .login-form { display: flex; gap: 8px; align-items: center; }
+  .login-form input { background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; padding: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>KnowFlow Demo</h1>
+
+  <div class="panel" id="login-panel">
+    <h2>Login</h2>
+    <div class="login-form">
+      <input type="text" id="username" placeholder="Username (alice)" value="alice">
+      <input type="password" id="password" placeholder="Password" value="demo">
+      <button onclick="doLogin()">Login</button>
+    </div>
+    <div id="login-status"></div>
+  </div>
+
+  <div class="panel" id="workflow-panel" style="display:none">
+    <h2>New Workflow</h2>
+    <textarea id="request-text" placeholder="Describe your incident...">Diagnose the RocketMQ orders backlog using the operations manual, create a P1 ticket, and request approval to restart the consumer.</textarea>
+    <button onclick="createWorkflow()" style="margin-top:8px">Submit Workflow</button>
+  </div>
+
+  <div class="panel" id="plan-panel" style="display:none">
+    <h2>Plan</h2>
+    <div id="plan-content"></div>
+  </div>
+
+  <div class="panel" id="timeline-panel" style="display:none">
+    <h2>Timeline</h2>
+    <div class="timeline" id="timeline-content"></div>
+  </div>
+
+  <div class="panel" id="citation-panel" style="display:none">
+    <h2>Citations</h2>
+    <div id="citation-content"></div>
+  </div>
+
+  <div class="panel" id="ticket-panel" style="display:none">
+    <h2>Ticket</h2>
+    <div id="ticket-content"></div>
+  </div>
+
+  <div class="panel" id="approval-panel" style="display:none">
+    <h2>Approvals</h2>
+    <div id="approval-content"></div>
+  </div>
+</div>
+
+<script src="/static/demo.js"></script>
+</body>
+</html>
