@@ -1,4 +1,4 @@
----
+﻿---
 description: "Dependency-ordered implementation tasks for the KnowFlow two-week MVP"
 ---
 
@@ -34,7 +34,7 @@ acceptance checkpoint; tasks use the exact checklist format and repository-relat
 
 **Purpose**: Build security, storage, state, contracts, and test primitives required by all stories.
 
-**⚠️ CRITICAL**: No user-story implementation starts until this phase passes its checkpoint.
+**鈿狅笍 CRITICAL**: No user-story implementation starts until this phase passes its checkpoint.
 
 - [X] T007 [P] Implement typed environment loading, secret validation, per-runtime settings, and safe defaults in `src/knowflow/config.py`
 - [X] T008 [P] Implement request/workflow/plan/task/operation/message ID creation, stable UUIDv5 operations, canonical JSON, and payload hashing in `src/knowflow/domain/common/identity.py`
@@ -62,7 +62,7 @@ and no test/user input can override the trusted access context.
 
 ---
 
-## Phase 3: User Story 1 — Resolve an Incident Through One Reliable Request (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 鈥?Resolve an Incident Through One Reliable Request (Priority: P1) 馃幆 MVP
 
 **Goal**: Complete the flagship request from cited diagnosis through at-least-once delivery with non-duplicated business effects,
 notification, approval pause/resume, and one sandbox operation.
@@ -87,31 +87,31 @@ and auditable terminal workflow even after repeated submits/resumes.
 - [X] T035 [P] [US1] Define compact LangGraph State, schema/plan versions, owned single-value fields, ID-deduping reducers, and persisted evidence references in `src/knowflow/workflows/state.py`
 - [X] T036 [US1] Implement operation-ledger claim/replay/conflict/success behavior and atomic ticket-create result reuse in `src/knowflow/application/workflows/operations.py`
 - [X] T037 [US1] Implement idempotent P1 ticket creation with TicketEvent, AuditEvent, Workflow projection, and Outbox in one unit of work in `src/knowflow/application/tickets/create.py`
-- [ ] T038 [US1] Implement the minimal real hybrid retrieval port with server-built ACL filters, RRF evidence selection, and evidence-insufficient disposition in `src/knowflow/application/knowledge/retrieval.py`
-- [ ] T039 [US1] Implement Milvus collection bootstrap, dense/BM25 hybrid query, stable segment IDs, and ACL scope-token filters in `src/knowflow/infrastructure/retrieval/milvus.py`
-- [ ] T040 [US1] Implement approval creation, exact plan/payload/resource binding, one-time decision, expiry/invalidation, and resume-command transaction in `src/knowflow/application/approvals/service.py`
-- [ ] T041 [P] [US1] Implement durable notification registration and recipient-scope resolution without direct network delivery in `src/knowflow/application/notifications/service.py`
-- [ ] T042 [P] [US1] Implement the allowlisted consumer-restart sandbox with stable operation IDs, status lookup, deadline, and repeat-safe outcomes in `src/knowflow/infrastructure/operations/sandbox.py`
-- [ ] T043 [P] [US1] Implement append-only linked audit writes and redacted workflow timeline reads in `src/knowflow/application/audit/service.py`
-- [ ] T044 [US1] Implement planner, clarification, retrieval, ticket, notification, approval interrupt, sandbox operation, and final-summary nodes in `src/knowflow/workflows/nodes/incident.py`
-- [ ] T045 [US1] Assemble conditional routes, task dependencies, interrupt/resume, retry boundaries, and Redis checkpointer compilation in `src/knowflow/workflows/graph.py`
-- [ ] T046 [US1] Implement durable workflow acceptance, message/clarification commands, projection reads, version ownership, and graph dispatch in `src/knowflow/application/workflows/service.py`
-- [ ] T047 [P] [US1] Persist monotonically sequenced workflow events and authorized replay windows for SSE reconnect in `src/knowflow/application/workflows/events.py`
-- [ ] T048 [US1] Implement create/list/get/message workflow endpoints and idempotency conflicts from `contracts/openapi.yaml` in `src/knowflow/api/routes/workflows.py`
-- [ ] T049 [P] [US1] Implement approval list/get/decision endpoints with role/object checks and concealed not-found behavior in `src/knowflow/api/routes/approvals.py`
-- [ ] T050 [P] [US1] Implement native SSE workflow event streaming with authorization, durable sequence IDs, reconnect, keepalive, and disconnect cleanup in `src/knowflow/api/routes/workflow_events.py`
-- [ ] T051 [P] [US1] Wrap Apache RocketMQ 5.x producer/consumer lifecycle, gRPC configuration, deadlines, and telemetry in `src/knowflow/infrastructure/messaging/rocketmq.py`
-- [ ] T052 [US1] Implement short-transaction Outbox leasing, network publish outside locks, stable message IDs, retry/dead state, and lease recovery in `src/knowflow/workers/outbox.py`
-- [ ] T053 [US1] Implement serialized workflow command consumption, Redis checkpoint resume, and safe active-run/version release in `src/knowflow/workers/workflow.py`
-- [ ] T054 [US1] Implement Inbox-deduped Mailpit notification delivery and repeat-safe delivery states in `src/knowflow/workers/notifications.py`
-- [ ] T055 [US1] Seed demo roles/users, canonical manual segments/indexes, sandbox resource, and the flagship request fixtures in `src/knowflow/cli.py`
-- [ ] T056 [US1] Build the minimal login, workflow prompt, streamed timeline, plan, citation, ticket, and approval panels in `src/knowflow/web/templates/demo.html` and `src/knowflow/web/static/demo.js`
+- [X] T038 [US1] Implement the minimal real hybrid retrieval port with server-built ACL filters, RRF evidence selection, and evidence-insufficient disposition in `src/knowflow/application/knowledge/retrieval.py`
+- [X] T039 [US1] Implement Milvus collection bootstrap, dense/BM25 hybrid query, stable segment IDs, and ACL scope-token filters in `src/knowflow/infrastructure/retrieval/milvus.py`
+- [X] T040 [US1] Implement approval creation, exact plan/payload/resource binding, one-time decision, expiry/invalidation, and resume-command transaction in `src/knowflow/application/approvals/service.py`
+- [X] T041 [P] [US1] Implement durable notification registration and recipient-scope resolution without direct network delivery in `src/knowflow/application/notifications/service.py`
+- [X] T042 [P] [US1] Implement the allowlisted consumer-restart sandbox with stable operation IDs, status lookup, deadline, and repeat-safe outcomes in `src/knowflow/infrastructure/operations/sandbox.py`
+- [X] T043 [P] [US1] Implement append-only linked audit writes and redacted workflow timeline reads in `src/knowflow/application/audit/service.py`
+- [X] T044 [US1] Implement planner, clarification, retrieval, ticket, notification, approval interrupt, sandbox operation, and final-summary nodes in `src/knowflow/workflows/nodes/incident.py`
+- [X] T045 [US1] Assemble conditional routes, task dependencies, interrupt/resume, retry boundaries, and Redis checkpointer compilation in `src/knowflow/workflows/graph.py`
+- [X] T046 [US1] Implement durable workflow acceptance, message/clarification commands, projection reads, version ownership, and graph dispatch in `src/knowflow/application/workflows/service.py`
+- [X] T047 [P] [US1] Persist monotonically sequenced workflow events and authorized replay windows for SSE reconnect in `src/knowflow/application/workflows/events.py`
+- [X] T048 [US1] Implement create/list/get/message workflow endpoints and idempotency conflicts from `contracts/openapi.yaml` in `src/knowflow/api/routes/workflows.py`
+- [X] T049 [P] [US1] Implement approval list/get/decision endpoints with role/object checks and concealed not-found behavior in `src/knowflow/api/routes/approvals.py`
+- [X] T050 [P] [US1] Implement native SSE workflow event streaming with authorization, durable sequence IDs, reconnect, keepalive, and disconnect cleanup in `src/knowflow/api/routes/workflow_events.py`
+- [X] T051 [P] [US1] Wrap Apache RocketMQ 5.x producer/consumer lifecycle, gRPC configuration, deadlines, and telemetry in `src/knowflow/infrastructure/messaging/rocketmq.py`
+- [X] T052 [US1] Implement short-transaction Outbox leasing, network publish outside locks, stable message IDs, retry/dead state, and lease recovery in `src/knowflow/workers/outbox.py`
+- [X] T053 [US1] Implement serialized workflow command consumption, Redis checkpoint resume, and safe active-run/version release in `src/knowflow/workers/workflow.py`
+- [X] T054 [US1] Implement Inbox-deduped Mailpit notification delivery and repeat-safe delivery states in `src/knowflow/workers/notifications.py`
+- [X] T055 [US1] Seed demo roles/users, canonical manual segments/indexes, sandbox resource, and the flagship request fixtures in `src/knowflow/cli.py`
+- [X] T056 [US1] Build the minimal login, workflow prompt, streamed timeline, plan, citation, ticket, and approval panels in `src/knowflow/web/templates/demo.html` and `src/knowflow/web/static/demo.js`
 
-**Checkpoint**: User Story 1 passes T027–T030 and can be demonstrated alone from the seeded data.
+**Checkpoint**: User Story 1 passes T027鈥揟030 and can be demonstrated alone from the seeded data.
 
 ---
 
-## Phase 4: User Story 2 — Get Permission-Safe, Cited Knowledge Answers (Priority: P2)
+## Phase 4: User Story 2 鈥?Get Permission-Safe, Cited Knowledge Answers (Priority: P2)
 
 **Goal**: Provide versioned document ingestion plus direct grounded answers with three-layer ACL and
 re-authorized citations.
@@ -136,11 +136,11 @@ unanswerable, stale-version, cache-scope, indirect-injection, and unauthorized c
 - [ ] T066 [US2] Implement admin document register/list/get plus explicit create-version/get-version/retry-version endpoints and durable ingestion events in `src/knowflow/api/routes/documents.py`
 - [ ] T067 [US2] Add bounded public manuals, protected document pairs, answerable/no-answer questions, and expected segment relevance in `data/eval/rag-v1.jsonl`
 
-**Checkpoint**: User Story 2 passes T057–T059 independently through the direct knowledge APIs.
+**Checkpoint**: User Story 2 passes T057鈥揟059 independently through the direct knowledge APIs.
 
 ---
 
-## Phase 5: User Story 3 — Manage Tickets Within Role and Object Permissions (Priority: P2)
+## Phase 5: User Story 3 鈥?Manage Tickets Within Role and Object Permissions (Priority: P2)
 
 **Goal**: Complete direct ticket creation/query/update, optimistic concurrency, durable events,
 notifications, and versioned SLA checks.
@@ -166,11 +166,11 @@ create, same-version updates, and current/obsolete SLA triggers without the flag
 - [ ] T078 [P] [US3] Seed two-user ownership/team fixtures, ticket state examples, and current/obsolete SLA cases in `data/seed/tickets.json`
 - [ ] T079 [US3] Add ticket/SLA/notification trace attributes and correctness counters without sensitive descriptions in `src/knowflow/infrastructure/observability/ticketing.py`
 
-**Checkpoint**: User Story 3 passes T068–T070 independently through direct ticket APIs.
+**Checkpoint**: User Story 3 passes T068鈥揟070 independently through direct ticket APIs.
 
 ---
 
-## Phase 6: User Story 4 — Recover and Audit Interrupted Workflows (Priority: P3)
+## Phase 6: User Story 4 鈥?Recover and Audit Interrupted Workflows (Priority: P3)
 
 **Goal**: Prove convergence after replay, duplicate delivery, stale checkpoints, conflicting workers,
 disconnects, uncertain external outcomes, and all five governed failures.
@@ -203,11 +203,11 @@ recovery state, trace, and report without manual database repair.
 - [ ] T097 [US4] Orchestrate targeted worker/container exits, checkpoint rollback, concurrent resumes, invariant queries, and artifact capture in `scripts/fault-injection.ps1`
 - [ ] T098 [US4] Persist scenario environment, failpoint, trace IDs, database invariants, duplicate observations, and pass/fail summaries in `src/knowflow/evaluation/fault_report.py`
 
-**Checkpoint**: All five tests T080–T084 pass and produce evidence under `reports/fault/`.
+**Checkpoint**: All five tests T080鈥揟084 pass and produce evidence under `reports/fault/`.
 
 ---
 
-## Phase 7: User Story 5 — Produce Honest Quality and Performance Evidence (Priority: P3)
+## Phase 7: User Story 5 鈥?Produce Honest Quality and Performance Evidence (Priority: P3)
 
 **Goal**: Generate versioned component, workflow, fault, real-model, and controlled-load evidence
 whose numbers can safely be used in the README, interview, and resume.
@@ -235,7 +235,7 @@ model suite; verify provenance, separated conclusions, and pending labels for ab
 - [ ] T111 [US5] Implement realistic knowledge/ticket/approval/status/document request mixes, user fairness, correctness assertions, and CSV metadata in `tests/load/locustfile.py`
 - [ ] T112 [US5] Expose `evaluate`, `load-metadata`, and report-index commands with measured-only summary output in `src/knowflow/cli.py`
 
-**Checkpoint**: User Story 5 passes T099–T100; reports under `reports/evaluation/` and `reports/load/`
+**Checkpoint**: User Story 5 passes T099鈥揟100; reports under `reports/evaluation/` and `reports/load/`
 contain enough provenance to reproduce results and never mix stub capacity with real-model quality.
 
 ---
@@ -251,7 +251,7 @@ contain enough provenance to reproduce results and never mix stub capacity with 
 - [ ] T117 Implement the canonical demo, approval handoff, duplicate replay, evidence-link sequence, and five-participant/20-attempt usability protocol template in `scripts/demo.ps1` and `reports/usability/protocol.md`
 - [ ] T118 Validate every command and expected outcome in `specs/001-knowflow-agent-platform/quickstart.md`, correcting documentation without weakening acceptance criteria
 - [ ] T119 Write architecture, state-authority, transaction, threat-model, failure semantics, metrics caveats, and demo instructions in `README.md`
-- [ ] T120 Replace only actually measured placeholders and link raw report artifacts in `KnowFlow_41道核心面试题_5分钟回答.md`
+- [ ] T120 Replace only actually measured placeholders and link raw report artifacts in `KnowFlow_41閬撴牳蹇冮潰璇曢_5鍒嗛挓鍥炵瓟.md`
 - [ ] T121 Capture the final contract snapshot, schema revision, test summary, evaluation/load/fault/usability report index (including 18-of-20 threshold and interventions), and resume-ready evidence checklist in `reports/README.md`
 
 **Final Checkpoint**: The quickstart runs from a clean local environment, every selected story and
@@ -263,19 +263,19 @@ governed test passes, and no documentation contains a fabricated result or produ
 
 ### Phase Dependencies
 
-- **Phase 1 — Setup**: no dependencies; T002–T006 can proceed after T001's package decisions are fixed.
-- **Phase 2 — Foundational**: depends on Phase 1 and blocks all stories. T012–T015 are parallel model
+- **Phase 1 鈥?Setup**: no dependencies; T002鈥揟006 can proceed after T001's package decisions are fixed.
+- **Phase 2 鈥?Foundational**: depends on Phase 1 and blocks all stories. T012鈥揟015 are parallel model
   groups; T016 combines them into the initial migration.
-- **Phase 3 — US1**: depends on Phase 2 and is the mandatory demonstration MVP.
-- **Phase 4 — US2**: depends on the foundational schema and the retrieval/worker ports established by
+- **Phase 3 鈥?US1**: depends on Phase 2 and is the mandatory demonstration MVP.
+- **Phase 4 鈥?US2**: depends on the foundational schema and the retrieval/worker ports established by
   US1; its direct knowledge acceptance suite does not require the flagship workflow endpoint.
-- **Phase 5 — US3**: depends on the foundational schema and shared operation/Outbox primitives from
+- **Phase 5 鈥?US3**: depends on the foundational schema and shared operation/Outbox primitives from
   US1; its direct ticket acceptance suite does not require model planning or knowledge retrieval.
-- **Phase 6 — US4**: depends on US1 and the ticket concurrency behavior from US3; it hardens recovery
+- **Phase 6 鈥?US4**: depends on US1 and the ticket concurrency behavior from US3; it hardens recovery
   across all prior business paths.
-- **Phase 7 — US5**: can begin dataset/metric work after Phase 2, but final reports require the stories
+- **Phase 7 鈥?US5**: can begin dataset/metric work after Phase 2, but final reports require the stories
   they measure and the US4 fault evidence.
-- **Phase 8 — Polish**: depends on all stories selected for the final demo.
+- **Phase 8 鈥?Polish**: depends on all stories selected for the final demo.
 
 ### User Story Dependency Graph
 
@@ -307,8 +307,8 @@ All selected stories -------------------------------------------------> Polish
 
 ### Shared Foundation
 
-After T001 defines dependencies, T002–T006 can be split by file. After T011 defines DB conventions,
-T012–T015 can be implemented in parallel, followed by T016. T021–T024 use separate adapters.
+After T001 defines dependencies, T002鈥揟006 can be split by file. After T011 defines DB conventions,
+T012鈥揟015 can be implemented in parallel, followed by T016. T021鈥揟024 use separate adapters.
 
 ### User Story 1
 
@@ -361,11 +361,11 @@ Parallel observability/load work after reporting contract: T109, T110, T111
 
 ### Two-Week Incremental Delivery
 
-1. **Days 1–2**: T001–T026 (setup, schema, auth, core ports).
-2. **Days 3–9**: T027–T056 (flagship vertical slice), while starting T057–T067 retrieval depth.
-3. **Days 8–11**: T068–T079 (direct ticket/SLA) and remaining knowledge work.
-4. **Day 12**: T080–T098 (failure/recovery evidence).
-5. **Days 13–14**: T099–T121 (evaluation, load, security, docs, final evidence).
+1. **Days 1鈥?**: T001鈥揟026 (setup, schema, auth, core ports).
+2. **Days 3鈥?**: T027鈥揟056 (flagship vertical slice), while starting T057鈥揟067 retrieval depth.
+3. **Days 8鈥?1**: T068鈥揟079 (direct ticket/SLA) and remaining knowledge work.
+4. **Day 12**: T080鈥揟098 (failure/recovery evidence).
+5. **Days 13鈥?4**: T099鈥揟121 (evaluation, load, security, docs, final evidence).
 
 If the schedule slips, complete US1, the US4 tests directly protecting its effects, and one honest
 US5 report. Defer document-format breadth, SLA UI polish, optional Langfuse export, and secondary
@@ -375,7 +375,7 @@ evaluation cases before weakening authentication, ACL, approval, idempotency, or
 
 - `[P]` means the task changes different files and has no dependency on an unfinished task in the
   same listed parallel group.
-- Every story task carries `[US1]`–`[US5]`; setup, foundation, and polish tasks intentionally do not.
+- Every story task carries `[US1]`鈥揱[US5]`; setup, foundation, and polish tasks intentionally do not.
 - Exact source paths follow [plan.md](plan.md); contract behavior follows [contracts/](contracts/).
 - Tests precede implementation because the constitution explicitly requires evidence-backed claims.
 - Commit after each coherent task or tightly coupled transaction-boundary group; never commit secrets.
