@@ -1,83 +1,71 @@
-# KnowFlow Agent Platform
+# KnowFlow Agent Platform — V2
 
-KnowFlow 是一个面向单企业多用户场景的企业知识与工单可靠执行 Agent 平台规划项目。
-目标不是再做一个文档问答 Demo，而是把自然语言请求可靠地转换为知识检索、工单操作、
-通知、人工审批和沙箱运维动作，并能在超时、中断、重复消息与多人并发下保持业务结果正确。
+KnowFlow 是一个面向单企业多用户场景的 **企业知识、工单与事故可靠执行 Agent 平台**。
+V2 将旧版“知识 + 工单 Agent”和 Resolve 的“Incident 调查/处置”统一为一个执行模型：
+自然语言先被解析为原子 Intent，再由确定性编译器生成跨通道 `IntentExecutionPlan` Task DAG；只有需要持续推理的任务进入唯一固定 Coordinator LangGraph。
 
-> 当前状态：项目规约、需求规格、架构设计、接口契约和实施任务已经完成；应用代码尚未实现。
-> 所有性能、质量和简历数字均为待实测目标，不代表已经取得的结果。
+> 当前仓库包含 2026-08-03 的 legacy baseline 规格和 2026-08-27 的 V2 amendment。V2 文档是当前推荐口径；旧文件保留用于历史追溯。
 
-## Flagship scenario
+## V2 governing architecture
 
-> 查询 RocketMQ 消息积压处理手册，创建一个 P1 工单并通知值班人员；调用消费者重启工具前，需要我审批。
-
-这一条请求用于展示多意图拆解、权限过滤 RAG、工单幂等、可靠消息、人工审批、暂停恢复与故障处理。
-
-## Planned architecture
-
-```mermaid
-flowchart TD
-    U["Employee / Operator / Approver"] --> A["FastAPI: JWT, RBAC, SSE, admission control"]
-    A --> P["Structured intent and task-DAG compiler"]
-    P --> G["LangGraph: execution, interrupt, resume"]
-    G --> R["Milvus: ACL-filtered dense + BM25 retrieval"]
-    G --> T["Ticket, notification and sandbox operation tools"]
-    G <--> C["Redis 8: checkpoints, sessions, limits, leases"]
-    T <--> D["MySQL: business truth, audit, Outbox / Inbox"]
-    D --> Q["RocketMQ 5.x: ingestion, notification, SLA and recovery events"]
+```text
+User Query / Follow-up Turn / Incident Trigger
+                  ↓
+          Intent Recognition (LLM)
+                  ↓
+          Slot Validation (rules)
+                  ↓
+     IntentExecutionPlan / Task DAG
+                  ↓
+             PlanExecutor
+        ┌─────────┼──────────┐
+        ↓         ↓          ↓
+ DIRECT_READ  BUSINESS   CONTROL_COMMAND
+             ACTION
+        └─────────┬──────────┘
+                  ↓ when reasoning is needed
+        Fixed Coordinator LangGraph
+        Plan → Evidence/RAG → Diagnosis
+        → Remediation? → Policy/Approval/Execute?
+        → Verify? → Notify?
 ```
 
-The governing reliability statement is:
+**Never:** `Intent -> Node -> dynamically build a LangGraph`.
 
-> Delivery is at least once; stable operation/message identities, MySQL constraints, Outbox/Inbox,
-> optimistic versions and replay-safe tools prevent duplicated business effects.
+**Always:** `Intent -> ExecutionPlan -> execution channel`.
 
-## Specification documents
+## Four execution channels
 
-- [Project constitution](.specify/memory/constitution.md)
-- [Feature specification](specs/001-knowflow-agent-platform/spec.md)
-- [Implementation plan](specs/001-knowflow-agent-platform/plan.md)
-- [Technical research](specs/001-knowflow-agent-platform/research.md)
-- [Data model](specs/001-knowflow-agent-platform/data-model.md)
-- [REST and SSE contract](specs/001-knowflow-agent-platform/contracts/openapi.yaml)
-- [RocketMQ event contract](specs/001-knowflow-agent-platform/contracts/events.md)
-- [Quickstart acceptance contract](specs/001-knowflow-agent-platform/quickstart.md)
-- [121 implementation tasks](specs/001-knowflow-agent-platform/tasks.md)
-- [41 interview questions and answers](KnowFlow_41道核心面试题_5分钟回答.md)
+| Channel | Examples | Runtime |
+|---|---|---|
+| `DIRECT_READ` | knowledge, metrics, logs, MQ lag, ticket/incident query | direct tool/query service; safe reads may run concurrently |
+| `BUSINESS_ACTION` | ticket create/update, ordinary notification | deterministic application service |
+| `CONTROL_COMMAND` | approve/reject/cancel/takeover | deterministic authorization/state command |
+| `COORDINATOR` | investigate, remediation, rollback/restart/scale, verify | the single fixed Coordinator Graph |
 
-## Two-week MVP boundary
+## Six demo scenarios
 
-In scope:
+1. `payment_release_incident` — complaints + error/P95 + MQ lag + rev-42 → two-round investigation → approval rollback → verify → support update.
+2. `mq_backlog_remediation` — MQ backlog → evidence/Runbook → conditional consumer restart → verification.
+3. `knowledge_query` — ACL/version-safe cited RAG; **no Agent Graph**.
+4. `multi_intent_ticket` — search Runbook + P1 ticket + on-call notification + investigate + conditional restart; Task DAG crosses multiple channels.
+5. `query_status` — direct ticket/incident status query; **no Agent Graph**.
+6. `conversation_thread` — one Thread, multiple Turns and Runs, refinement/extension with `parent_run_id` lineage.
 
-- Python 3.12 end-to-end system
-- Single enterprise with employee, operator, approver and administrator roles
-- Permission-filtered cited knowledge answers
-- Ticket create/query/update with optimistic concurrency
-- Structured single/multi-intent planning and focused clarification
-- Human approval with durable interrupt/resume
-- MySQL Outbox/Inbox and RocketMQ at-least-once delivery
-- Fault injection, quality evaluation and controlled-load evidence
+## Current V2 documents
 
-Explicitly out of scope:
+- [V2 feature specification](specs/001-knowflow-agent-platform/spec-v2.md)
+- [V2 implementation plan](specs/001-knowflow-agent-platform/plan-v2.md)
+- [V2 data model amendment](specs/001-knowflow-agent-platform/data-model-v2.md)
+- [V2 quickstart / scenario contract](specs/001-knowflow-agent-platform/quickstart-v2.md)
+- [V2 task list](specs/001-knowflow-agent-platform/tasks-v2.md)
+- [Execution architecture decision](docs/V2_EXECUTION_ARCHITECTURE.md)
+- [Browseable V2 teaching demo](demo/README.md)
 
-- Multi-tenant SaaS claims
-- Kubernetes or production-scale deployment claims
-- Arbitrary tool execution or autonomous multi-agent teams
-- Model fine-tuning and full benchmark-corpus ingestion
-- Unmeasured resume metrics or transport-level exactly-once claims
+## Legacy baseline
 
-## Analysis status
+The original files remain unchanged: `spec.md`, `plan.md`, `data-model.md`, `quickstart.md`, and `tasks.md` describe the initial two-week MVP baseline. V2 documents supersede them where terminology or execution architecture differs.
 
-The latest read-only Spec Kit analysis found no constitutional or CRITICAL issue and mapped all
-30 functional requirements plus 10 success criteria to implementation tasks. Before implementation,
-the plan should still resolve five HIGH-priority gaps: document-version/retry API contracts, audit
-query contract, operator recovery contract, notification-state visibility, and a measurable scripted
-usability protocol.
+## Reliability statement
 
-## Next workflow
-
-1. Amend the specification/contracts/tasks for the analysis findings.
-2. Rerun `$speckit-analyze`.
-3. Execute `$speckit-implement` story by story, preserving test and measurement evidence.
-
-No license has been selected yet. Unless a license is added, normal copyright restrictions apply.
+> Delivery is at least once. Stable message/operation identities, MySQL constraints, Outbox/Inbox, downstream idempotency ledgers, UNKNOWN reconciliation and fencing prevent duplicate business effects. Transport-level exactly-once is not claimed.
